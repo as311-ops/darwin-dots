@@ -14,7 +14,7 @@ export default function GenomeGraph({ profile, width, height }: GenomeGraphProps
         className="bg-zinc-900 rounded-lg border border-zinc-800 flex items-center justify-center text-zinc-600 text-xs"
         style={{ width, height }}
       >
-        Warte auf erste Generation...
+        Waiting for first generation...
       </div>
     );
   }
@@ -27,7 +27,7 @@ export default function GenomeGraph({ profile, width, height }: GenomeGraphProps
       {/* Header */}
       <div className="flex items-center justify-between mb-1.5 px-1 flex-shrink-0">
         <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-          Konsens-Genom
+          Consensus Genome
         </span>
         <span className="text-[10px] text-zinc-600 font-mono">
           {profile.avgGenomeLength}G / {profile.avgNeuronCount}N
@@ -92,7 +92,7 @@ export default function GenomeGraph({ profile, width, height }: GenomeGraphProps
         </span>
         <span className="text-[9px] flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
-          <span className="text-zinc-600">Aktion</span>
+          <span className="text-zinc-600">Action</span>
         </span>
       </div>
     </div>

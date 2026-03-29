@@ -43,35 +43,35 @@ export const DEFAULT_CONFIG: SimConfig = {
 
 // Must match Challenge enum in types.ts exactly
 const CHALLENGE_NAMES: Record<number, string> = {
-  0: "Kreis (SW-Viertel)",
-  1: "Rechte Hälfte",
-  2: "Rechtes Viertel",
-  3: "String-Verhalten",
-  4: "Mitte (gewichtet)",
-  5: "Mitte (ungewichtet)",
-  6: "Ecken",
-  7: "Ecken (gewichtet)",
-  8: "Migrations-Distanz",
-  9: "Mitte (spärlich)",
-  10: "Linkes Achtel",
-  11: "Radioaktive Wände",
-  12: "An Wand (Ende)",
-  13: "Wand berührt (je)",
-  14: "Ost-West Achtel",
-  15: "Nahe Barriere",
-  16: "Paare bilden",
-  17: "Ortssequenz",
-  18: "Altruismus",
+  0: "Circle (SW Quarter)",
+  1: "Right Half",
+  2: "Right Quarter",
+  3: "String Behavior",
+  4: "Center (Weighted)",
+  5: "Center (Unweighted)",
+  6: "Corners",
+  7: "Corners (Weighted)",
+  8: "Migration Distance",
+  9: "Center (Sparse)",
+  10: "Left Eighth",
+  11: "Radioactive Walls",
+  12: "Against Wall (End)",
+  13: "Wall Touched (Any)",
+  14: "East-West Eighth",
+  15: "Near Barrier",
+  16: "Pair Formation",
+  17: "Location Sequence",
+  18: "Altruism",
 };
 
 const BARRIER_NAMES: Record<number, string> = {
-  0: "Keine",
-  1: "Vertikale Wand (Mitte)",
-  2: "Kreuz",
-  3: "Vertikale Wand (versetzt)",
-  4: "Spirale",
-  5: "Diagonale",
-  6: "Mehrere Rechtecke",
+  0: "None",
+  1: "Vertical Wall (Center)",
+  2: "Cross",
+  3: "Vertical Wall (Offset)",
+  4: "Spiral",
+  5: "Diagonal",
+  6: "Multiple Rectangles",
 };
 
 interface ControlPanelProps {
@@ -227,7 +227,7 @@ export default function ControlPanel({
                 : "bg-zinc-800 text-zinc-400"
             }`}
           >
-            {running ? "Läuft" : "Pausiert"}
+            {running ? "Running" : "Paused"}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -238,7 +238,7 @@ export default function ControlPanel({
             </div>
           </div>
           <div>
-            <div className="text-zinc-500">Schritt</div>
+            <div className="text-zinc-500">Step</div>
             <div className="font-mono text-zinc-200 text-lg">
               {state?.simStep ?? 0}
             </div>
@@ -250,7 +250,7 @@ export default function ControlPanel({
             </div>
           </div>
           <div>
-            <div className="text-zinc-500">Überlebende</div>
+            <div className="text-zinc-500">Survivors</div>
             <div className="font-mono text-emerald-400">
               {state?.survivors ?? "–"}
             </div>
@@ -287,7 +287,7 @@ export default function ControlPanel({
           </button>
         </div>
         <Slider
-          label="Geschwindigkeit"
+          label="Speed"
           value={speed}
           min={1}
           max={60}
@@ -308,7 +308,7 @@ export default function ControlPanel({
         className="flex items-center justify-between w-full bg-zinc-900 border border-zinc-800
                    rounded-lg px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
       >
-        <span>Konfiguration</span>
+        <span>Configuration</span>
         <span className={`transition-transform ${configOpen ? "rotate-180" : ""}`}>▼</span>
       </button>
 
@@ -325,7 +325,7 @@ export default function ControlPanel({
                 : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            {s === "sim" ? "Welt" : s === "genome" ? "Genom" : "Sensor"}
+            {s === "sim" ? "World" : s === "genome" ? "Genome" : "Sensor"}
           </button>
         ))}
       </div>
@@ -344,7 +344,7 @@ export default function ControlPanel({
               disabled={running}
             />
             <Slider
-              label="Schritte/Gen."
+              label="Steps/Gen."
               value={config.stepsPerGeneration}
               min={50}
               max={1000}
@@ -370,7 +370,7 @@ export default function ControlPanel({
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-zinc-400">Barriere</label>
+              <label className="text-xs text-zinc-400">Barrier</label>
               <select
                 value={config.barrierType}
                 onChange={(e) => update("barrierType", Number(e.target.value))}
@@ -392,7 +392,7 @@ export default function ControlPanel({
         {section === "genome" && (
           <>
             <Slider
-              label="Genom-Länge"
+              label="Genome Length"
               value={config.genomeInitialLength}
               min={4}
               max={64}
@@ -401,7 +401,7 @@ export default function ControlPanel({
               disabled={running}
             />
             <Slider
-              label="Max Neuronen"
+              label="Max Neurons"
               value={config.maxNumberNeurons}
               min={1}
               max={20}
@@ -410,7 +410,7 @@ export default function ControlPanel({
               disabled={running}
             />
             <Slider
-              label="Mutationsrate"
+              label="Mutation Rate"
               value={config.pointMutationRate}
               min={0}
               max={0.05}
@@ -418,17 +418,17 @@ export default function ControlPanel({
               onChange={(v) => update("pointMutationRate", v)}
             />
             <Toggle
-              label="Sexuelle Reproduktion"
+              label="Sexual Reproduction"
               checked={config.sexualReproduction}
               onChange={(v) => update("sexualReproduction", v)}
             />
             <Toggle
-              label="Fitness-basierte Selektion"
+              label="Fitness-Based Selection"
               checked={config.chooseParentsByFitness}
               onChange={(v) => update("chooseParentsByFitness", v)}
             />
             <Toggle
-              label="Kill-Aktion aktiviert"
+              label="Kill Action Enabled"
               checked={config.killEnable}
               onChange={(v) => update("killEnable", v)}
             />
@@ -438,7 +438,7 @@ export default function ControlPanel({
         {section === "sensors" && (
           <>
             <Slider
-              label="Sensor-Radius (Population)"
+              label="Sensor Radius (Population)"
               value={config.populationSensorRadius}
               min={1}
               max={10}
@@ -447,7 +447,7 @@ export default function ControlPanel({
               onChange={(v) => update("populationSensorRadius", v)}
             />
             <Slider
-              label="Long-Probe Distanz"
+              label="Long Probe Distance"
               value={config.longProbeDistance}
               min={1}
               max={32}
@@ -455,7 +455,7 @@ export default function ControlPanel({
               onChange={(v) => update("longProbeDistance", v)}
             />
             <Slider
-              label="Signal-Schichten"
+              label="Signal Layers"
               value={config.signalLayers}
               min={1}
               max={4}
@@ -464,7 +464,7 @@ export default function ControlPanel({
               disabled={running}
             />
             <Slider
-              label="Response-Kurve K"
+              label="Response Curve K"
               value={config.responsivenessCurveKFactor}
               min={1}
               max={10}
@@ -499,10 +499,10 @@ function SurvivalKPI({
   const allSurvive = hasData && rate >= 0.99;
   const displayRate = allSurvive ? avgFitness : rate;
   const pct = Math.round(displayRate * 100);
-  const label = allSurvive ? 'Ø Fitness' : 'Überlebensrate';
+  const label = allSurvive ? 'Avg Fitness' : 'Survival Rate';
   const detail = allSurvive
-    ? `Alle überleben — Score zählt`
-    : `${survivors} von ${population}`;
+    ? `All survive — score matters`
+    : `${survivors} of ${population}`;
 
   // Color transitions: 0% = red, 30% = amber, 60%+ = green
   const color = !hasData
@@ -560,7 +560,7 @@ function SurvivalKPI({
         <div className="text-zinc-500 text-[10px] mt-0.5">
           {hasData
             ? detail
-            : running ? 'Warte auf Gen. 1...' : 'Starte die Simulation'}
+            : running ? 'Waiting for gen. 1...' : 'Start the simulation'}
         </div>
         {hasData && (
           <div className="text-zinc-600 text-[10px] font-mono mt-0.5">
@@ -580,10 +580,10 @@ function estimateEta(remainingGens: number, stepsPerGen: number, fps: number): s
   const secondsRemaining = totalRemainingSteps / stepsPerSecond;
   const minutes = secondsRemaining / 60;
 
-  if (minutes < 1) return `~${Math.ceil(secondsRemaining)}s verbleibend`;
-  if (minutes < 60) return `~${Math.ceil(minutes)} min verbleibend`;
+  if (minutes < 1) return `~${Math.ceil(secondsRemaining)}s remaining`;
+  if (minutes < 60) return `~${Math.ceil(minutes)} min remaining`;
   const hours = minutes / 60;
-  if (hours < 24) return `~${hours.toFixed(1)}h verbleibend`;
+  if (hours < 24) return `~${hours.toFixed(1)}h remaining`;
   const days = hours / 24;
-  return `~${days.toFixed(1)} Tage verbleibend`;
+  return `~${days.toFixed(1)} days remaining`;
 }

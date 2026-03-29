@@ -41,17 +41,17 @@ export default function AgentInspector({ info, onClose }: AgentInspectorProps) {
       {/* Basic stats */}
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Position" value={`${info.x}, ${info.y}`} />
-        <Stat label="Alter" value={String(info.age)} />
-        <Stat label="Richtung" value={DIR_NAMES[info.lastMoveDir] ?? '?'} />
-        <Stat label="Genom" value={`${info.genomeLength} Gene`} />
-        <Stat label="Neuronen" value={String(info.neuronCount)} />
-        <Stat label="Verb." value={String(info.connectionCount)} />
+        <Stat label="Age" value={String(info.age)} />
+        <Stat label="Direction" value={DIR_NAMES[info.lastMoveDir] ?? '?'} />
+        <Stat label="Genome" value={`${info.genomeLength} genes`} />
+        <Stat label="Neurons" value={String(info.neuronCount)} />
+        <Stat label="Conn." value={String(info.connectionCount)} />
       </div>
 
       {/* Sensor values — single column, full width */}
       <div>
         <div className="text-zinc-500 uppercase tracking-wider text-[10px] mb-1.5">
-          Sensoren
+          Sensors
         </div>
         <div className="space-y-px max-h-44 overflow-y-auto">
           {info.sensorValues.map((s) => (
@@ -76,7 +76,7 @@ export default function AgentInspector({ info, onClose }: AgentInspectorProps) {
       {/* Neural net connections */}
       <div>
         <div className="text-zinc-500 uppercase tracking-wider text-[10px] mb-1.5">
-          Neuronales Netz ({info.connectionCount} Verb.)
+          Neural Network ({info.connectionCount} Conn.)
         </div>
         <div className="max-h-36 overflow-y-auto space-y-0.5">
           {info.connections.map((c, i) => {
@@ -100,7 +100,7 @@ export default function AgentInspector({ info, onClose }: AgentInspectorProps) {
             );
           })}
           {info.connections.length === 0 && (
-            <div className="text-zinc-600 italic">Keine Verbindungen</div>
+            <div className="text-zinc-600 italic">No connections</div>
           )}
         </div>
       </div>

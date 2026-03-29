@@ -10,10 +10,10 @@ export interface Preset {
 
 export const PRESETS: Preset[] = [
   {
-    name: "Schnellstart",
-    description: "Einfache Challenge, schnelles Ergebnis. Perfekt zum Kennenlernen.",
+    name: "Quick Start",
+    description: "Simple challenge, fast results. Perfect for getting started.",
     config: {
-      challenge: 1, // Rechte Hälfte
+      challenge: 1, // Right Half
       population: 1000,
       stepsPerGeneration: 300,
       maxGenerations: 200,
@@ -24,10 +24,10 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Schwärme",
-    description: "Große Population, 4 Ecken als Ziel. Beobachte wie sich farbige Cluster bilden.",
+    name: "Swarms",
+    description: "Large population, 4 corners as target. Watch colorful clusters form.",
     config: {
-      challenge: 7, // Ecken gewichtet
+      challenge: 7, // Corners weighted
       population: 2000,
       stepsPerGeneration: 200,
       maxGenerations: 300,
@@ -38,24 +38,24 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Labyrinth",
-    description: "Die Mitte ist das Ziel — aber ein Kreuz aus Wänden versperrt den Weg.",
+    name: "Maze",
+    description: "The center is the goal — but a cross of walls blocks the way.",
     config: {
-      challenge: 4, // Mitte gewichtet
+      challenge: 4, // Center weighted
       population: 1000,
       stepsPerGeneration: 300,
       maxGenerations: 500,
       genomeInitialLength: 24,
       maxNumberNeurons: 5,
       pointMutationRate: 0.001,
-      barrierType: 3, // Fünf Blöcke
+      barrierType: 3, // Five blocks
     },
   },
   {
-    name: "Apokalypse",
-    description: "Radioaktive Wände rücken von allen Seiten vor. Nur die Schnellsten überleben.",
+    name: "Apocalypse",
+    description: "Radioactive walls close in from all sides. Only the fastest survive.",
     config: {
-      challenge: 11, // Radioaktive Wände
+      challenge: 11, // Radioactive Walls
       population: 2000,
       stepsPerGeneration: 500,
       maxGenerations: 300,
@@ -67,9 +67,9 @@ export const PRESETS: Preset[] = [
   },
   {
     name: "Dating",
-    description: "Finde genau einen Partner. Kein Dreiecks-Drama. Monogamie oder Tod.",
+    description: "Find exactly one partner. No love triangles. Monogamy or death.",
     config: {
-      challenge: 16, // Paare
+      challenge: 16, // Pairs
       population: 1000,
       stepsPerGeneration: 300,
       maxGenerations: 1000,
@@ -80,10 +80,10 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Nomaden",
-    description: "Je weiter von der Geburt entfernt, desto besser. Stubenhocker sterben aus.",
+    name: "Nomads",
+    description: "The farther from birth, the better. Couch potatoes go extinct.",
     config: {
-      challenge: 8, // Migrations-Distanz
+      challenge: 8, // Migration distance
       population: 1000,
       stepsPerGeneration: 300,
       maxGenerations: 300,
@@ -94,10 +94,10 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Mutanten",
-    description: "Extreme Mutationsrate. Chaotisch, aber erstaunlich schnelle Anpassung.",
+    name: "Mutants",
+    description: "Extreme mutation rate. Chaotic, but surprisingly fast adaptation.",
     config: {
-      challenge: 1, // Rechte Hälfte
+      challenge: 1, // Right Half
       population: 3000,
       stepsPerGeneration: 200,
       maxGenerations: 200,
@@ -108,10 +108,10 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Genies",
-    description: "Große Gehirne, viele Gene, langsame Mutation. Komplexe Strategien brauchen Zeit.",
+    name: "Geniuses",
+    description: "Big brains, many genes, slow mutation. Complex strategies take time.",
     config: {
-      challenge: 7, // Ecken gewichtet
+      challenge: 7, // Corners weighted
       population: 500,
       stepsPerGeneration: 400,
       maxGenerations: 1000,

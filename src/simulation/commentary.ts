@@ -36,13 +36,13 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
   // --- Generation milestones ---
   if (generation === 1) {
     lines.push({
-      text: `Willkommen zur ${challengeName}-Challenge! ${population} Darwin-Dots starten ins Rennen. Wer schafft es in die Zielzone?`,
+      text: `Welcome to the ${challengeName} Challenge! ${population} Darwin-Dots are lining up at the start. Who will make it to the goal zone?`,
       type: 'hype',
       generation,
     });
   } else if (generation % 50 === 0) {
     lines.push({
-      text: `Generation ${generation}! ${survivors} von ${population} haben es geschafft — eine Überlebensrate von ${pct(rate)}.`,
+      text: `Generation ${generation}! ${survivors} out of ${population} made it — a survival rate of ${pct(rate)}.`,
       type: 'milestone',
       generation,
     });
@@ -53,9 +53,9 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     if (rateChange > 0.15) {
       lines.push({
         text: pick([
-          `WAHNSINN! Die Überlebensrate schießt hoch — von ${pct(prevRate)} auf ${pct(rate)}! Die Evolution hat einen Gang hochgeschaltet!`,
-          `Was für ein Sprung! ${pct(rate)} Überlebende! Das Training zeigt Wirkung, die Darwin-Dots haben etwas Entscheidendes gelernt!`,
-          `DURCHBRUCH in Generation ${generation}! ${survivors} Überlebende — das ist ein neuer Rekord für diese Population!`,
+          `UNBELIEVABLE! The survival rate is skyrocketing — from ${pct(prevRate)} to ${pct(rate)}! Evolution just shifted into high gear!`,
+          `What a leap! ${pct(rate)} survivors! The training is paying off — the Darwin-Dots have learned something crucial!`,
+          `BREAKTHROUGH in generation ${generation}! ${survivors} survivors — that's a new record for this population!`,
         ]),
         type: 'hype',
         generation,
@@ -63,8 +63,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     } else if (rateChange > 0.05) {
       lines.push({
         text: pick([
-          `Solide Verbesserung! ${pct(rate)} schaffen es durch — der Trend zeigt nach oben.`,
-          `Die Population wird stärker. ${survivors} Überlebende, das sind ${Math.round(rateChange * population)} mehr als letzte Generation.`,
+          `Solid improvement! ${pct(rate)} are making it through — the trend is pointing upward.`,
+          `The population is getting stronger. ${survivors} survivors, that's ${Math.round(rateChange * population)} more than last generation.`,
         ]),
         type: 'analysis',
         generation,
@@ -72,9 +72,9 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     } else if (rateChange < -0.1) {
       lines.push({
         text: pick([
-          `Oje! Die Überlebensrate fällt auf ${pct(rate)}. Waren die Mutationen zu aggressiv?`,
-          `Rückschlag! Nur noch ${survivors} Überlebende. Die Generation hat's nicht drauf.`,
-          `Das tut weh — von ${pct(prevRate)} runter auf ${pct(rate)}. Manchmal macht Evolution einen Schritt zurück.`,
+          `Ouch! The survival rate drops to ${pct(rate)}. Were the mutations too aggressive?`,
+          `Setback! Only ${survivors} survivors left. This generation just doesn't have it.`,
+          `That hurts — down from ${pct(prevRate)} to ${pct(rate)}. Sometimes evolution takes a step backward.`,
         ]),
         type: 'concern',
         generation,
@@ -82,8 +82,8 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     } else if (survivors === 0) {
       lines.push({
         text: pick([
-          `TOTALAUSFALL! Null Überlebende! Die Population wird komplett neu gewürfelt. Zurück auf Anfang!`,
-          `Kompletter Reset — niemand hat die Challenge geschafft. Evolution ist brutal.`,
+          `TOTAL WIPEOUT! Zero survivors! The population gets completely reshuffled. Back to square one!`,
+          `Complete reset — nobody beat the challenge. Evolution is brutal.`,
         ]),
         type: 'concern',
         generation,
@@ -100,13 +100,13 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
       const prevTop = prevProfile.topConnections[0];
       if (prevTop && (top.from !== prevTop.from || top.to !== prevTop.to)) {
         lines.push({
-          text: `Taktikwechsel! Die häufigste Verbindung ist jetzt ${connDesc(top)} — vorher war es ${connDesc(prevTop)}.`,
+          text: `Tactical shift! The most common connection is now ${connDesc(top)} — previously it was ${connDesc(prevTop)}.`,
           type: 'analysis',
           generation,
         });
       } else if (top.frequency > 0.7 && (!prevTop || prevTop.frequency < 0.7)) {
         lines.push({
-          text: `${pct(top.frequency)} der Überlebenden nutzen ${connDesc(top)} — das ist fast schon ein Herdentrieb!`,
+          text: `${pct(top.frequency)} of survivors are using ${connDesc(top)} — that's practically a herd mentality!`,
           type: 'analysis',
           generation,
         });
@@ -124,7 +124,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     // Connection count convergence
     if (prevProfile && genomeProfile.connectionCount < prevProfile.connectionCount * 0.7) {
       lines.push({
-        text: `Die Genome werden schlanker — nur noch ${genomeProfile.connectionCount} verschiedene Verbindungstypen. Die Population konvergiert!`,
+        text: `The genomes are getting leaner — only ${genomeProfile.connectionCount} distinct connection types left. The population is converging!`,
         type: 'analysis',
         generation,
       });
@@ -136,15 +136,15 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     if (diversityChange < -0.1) {
       lines.push({
         text: pick([
-          `Die genetische Vielfalt sinkt rapide. Die Darwin-Dots werden sich immer ähnlicher — ein dominantes Genom setzt sich durch.`,
-          `Monokultur im Anmarsch! Diversität fällt auf ${pct(diversity)}. Ein Siegergenom verdrängt die Konkurrenz.`,
+          `Genetic diversity is dropping fast. The Darwin-Dots are looking more and more alike — a dominant genome is taking over.`,
+          `Monoculture incoming! Diversity falls to ${pct(diversity)}. A winning genome is pushing out the competition.`,
         ]),
         type: 'analysis',
         generation,
       });
     } else if (diversity > 0.8) {
       lines.push({
-        text: `Maximale Vielfalt! Die Population probiert noch wild verschiedene Strategien aus. Kein klarer Favorit.`,
+        text: `Maximum diversity! The population is still trying wildly different strategies. No clear favorite yet.`,
         type: 'analysis',
         generation,
       });
@@ -155,7 +155,7 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
 }
 
 // ---------------------------------------------------------------------------
-// Match Summary — Spielzusammenfassung
+// Match Summary
 // ---------------------------------------------------------------------------
 
 export interface SummaryInput {
@@ -175,8 +175,8 @@ export function generateSummary(input: SummaryInput): MatchSummary {
 
   if (history.length < 2) {
     return {
-      headline: 'Simulation noch nicht gestartet',
-      paragraphs: ['Starte die Simulation, um eine Zusammenfassung zu erhalten.'],
+      headline: 'Simulation not yet started',
+      paragraphs: ['Start the simulation to get a summary.'],
     };
   }
 
@@ -219,15 +219,15 @@ export function generateSummary(input: SummaryInput): MatchSummary {
   // --- Build headline ---
   let headline: string;
   if (lastRate > 0.7) {
-    headline = `Dominanter Sieg: ${pct(lastRate)} Überlebensrate nach ${totalGenerations} Generationen!`;
+    headline = `Dominant Victory: ${pct(lastRate)} survival rate after ${totalGenerations} generations!`;
   } else if (lastRate > 0.3) {
-    headline = `Solides Ergebnis: ${challengeName}-Challenge mit ${pct(lastRate)} gemeistert`;
+    headline = `Solid Result: ${challengeName} Challenge conquered with ${pct(lastRate)}`;
   } else if (lastRate > 0.05) {
-    headline = `Zäher Kampf: Nur ${pct(lastRate)} überleben die ${challengeName}-Challenge`;
+    headline = `Tough Fight: Only ${pct(lastRate)} survive the ${challengeName} Challenge`;
   } else if (lastRate > 0) {
-    headline = `Knapp am Abgrund: ${last.survivors} Überlebende nach ${totalGenerations} Generationen`;
+    headline = `On the Brink: ${last.survivors} survivors after ${totalGenerations} generations`;
   } else {
-    headline = `Totalschaden: Die ${challengeName}-Challenge bleibt unbezwungen`;
+    headline = `Total Wreck: The ${challengeName} Challenge remains unbeaten`;
   }
 
   // --- Build paragraphs ---
@@ -235,27 +235,27 @@ export function generateSummary(input: SummaryInput): MatchSummary {
 
   // Opening
   paras.push(
-    `${population} Darwin-Dots traten in ${totalGenerations} Generationen zur ${challengeName}-Challenge an. ` +
-    `Die Überlebensrate startete bei ${pct(firstRate)} und endete bei ${pct(lastRate)} — ` +
+    `${population} Darwin-Dots competed across ${totalGenerations} generations in the ${challengeName} Challenge. ` +
+    `The survival rate started at ${pct(firstRate)} and ended at ${pct(lastRate)} — ` +
     (lastRate > firstRate
-      ? `eine klare Steigerung um ${pct(lastRate - firstRate)}.`
+      ? `a clear improvement of ${pct(lastRate - firstRate)}.`
       : lastRate < firstRate
-        ? `ein Rückgang um ${pct(firstRate - lastRate)}.`
-        : `keine Veränderung.`)
+        ? `a decline of ${pct(firstRate - lastRate)}.`
+        : `no change.`)
   );
 
   // Key moments
   const moments: string[] = [];
   if (biggestJump > 0.05) {
-    moments.push(`Der größte Durchbruch kam in Generation ${jumpGen}, als die Überlebenden von ${jumpFrom} auf ${jumpTo} sprangen.`);
+    moments.push(`The biggest breakthrough came in generation ${jumpGen}, when survivors jumped from ${jumpFrom} to ${jumpTo}.`);
   }
   if (bestGen.generation !== last.generation) {
-    moments.push(`Die beste Generation war Nr. ${bestGen.generation} mit ${bestGen.survivors} Überlebenden (${pct(bestRate)}).`);
+    moments.push(`The best generation was #${bestGen.generation} with ${bestGen.survivors} survivors (${pct(bestRate)}).`);
   }
   if (worstGen.survivors === 0 && resets > 0) {
-    moments.push(`${resets}× musste die Population komplett neu gewürfelt werden — null Überlebende, zurück auf Anfang.`);
+    moments.push(`${resets}x the population had to be completely reshuffled — zero survivors, back to square one.`);
   } else if (worstGen.survivors > 0 && worstRate < lastRate * 0.5) {
-    moments.push(`Der Tiefpunkt war Generation ${worstGen.generation} mit nur ${worstGen.survivors} Überlebenden.`);
+    moments.push(`The low point was generation ${worstGen.generation} with only ${worstGen.survivors} survivors.`);
   }
   if (moments.length > 0) {
     paras.push(moments.join(' '));
@@ -263,11 +263,11 @@ export function generateSummary(input: SummaryInput): MatchSummary {
 
   // Diversity analysis
   if (lastDiv < 0.3 && firstDiv > 0.5) {
-    paras.push(`Die genetische Vielfalt sank von ${pct(firstDiv)} auf ${pct(lastDiv)}. Ein dominantes Genom hat sich durchgesetzt — die Darwin-Dots sind quasi Klone.`);
+    paras.push(`Genetic diversity dropped from ${pct(firstDiv)} to ${pct(lastDiv)}. A dominant genome has taken over — the Darwin-Dots are practically clones.`);
   } else if (lastDiv > 0.7) {
-    paras.push(`Die Diversität blieb mit ${pct(lastDiv)} hoch. Die Population hat noch kein einheitliches Erfolgsrezept gefunden.`);
+    paras.push(`Diversity remained high at ${pct(lastDiv)}. The population hasn't found a unified formula for success yet.`);
   } else {
-    paras.push(`Die genetische Vielfalt pendelte sich bei ${pct(lastDiv)} ein — eine gesunde Mischung aus Konvergenz und Variation.`);
+    paras.push(`Genetic diversity settled at ${pct(lastDiv)} — a healthy mix of convergence and variation.`);
   }
 
   // Final strategy
@@ -278,19 +278,19 @@ export function generateSummary(input: SummaryInput): MatchSummary {
 
     const parts: string[] = [];
     if (sensorConns.length > 0) {
-      const sNames = sensorConns.map(c => `„${humanLabel(c.from, 'sensor')}"`).join(' und ');
-      parts.push(`nutzt ${sNames} als Sinne`);
+      const sNames = sensorConns.map(c => `"${humanLabel(c.from, 'sensor')}"`).join(' and ');
+      parts.push(`relies on ${sNames} as senses`);
     }
     if (moveConns.length > 0) {
-      const mNames = moveConns.map(c => `„${humanLabel(c.to, 'action')}"`).join(' und ');
-      parts.push(`setzt auf ${mNames}`);
+      const mNames = moveConns.map(c => `"${humanLabel(c.to, 'action')}"`).join(' and ');
+      parts.push(`banks on ${mNames}`);
     }
 
     if (parts.length > 0) {
       paras.push(
-        `Das Sieger-Genom (${finalProfile.avgGenomeLength} Gene, ${finalProfile.avgNeuronCount} Neuronen) ` +
-        parts.join(' und ') + '. ' +
-        `${finalProfile.connectionCount} verschiedene Verbindungsmuster wurden bei den Überlebenden beobachtet.`
+        `The winning genome (${finalProfile.avgGenomeLength} genes, ${finalProfile.avgNeuronCount} neurons) ` +
+        parts.join(' and ') + '. ' +
+        `${finalProfile.connectionCount} distinct connection patterns were observed among the survivors.`
       );
     }
   }
@@ -298,17 +298,17 @@ export function generateSummary(input: SummaryInput): MatchSummary {
   // Closing
   if (lastRate > 0.5) {
     paras.push(pick([
-      `Eine beeindruckende Leistung der Evolution. Die Darwin-Dots haben die Challenge klar im Griff.`,
-      `Darwin wäre stolz. Diese Population hat verstanden, was nötig ist.`,
-      `Fazit: Die natürliche Selektion liefert — ${pct(lastRate)} finden zuverlässig den Weg.`,
+      `An impressive feat of evolution. The Darwin-Dots have this challenge firmly in hand.`,
+      `Darwin would be proud. This population has figured out what it takes.`,
+      `Bottom line: Natural selection delivers — ${pct(lastRate)} reliably find the way.`,
     ]));
   } else if (lastRate > 0) {
     paras.push(pick([
-      `Es bleibt Luft nach oben. Mehr Generationen könnten die Überlebensrate weiter steigern.`,
-      `Die Evolution arbeitet — langsam, aber stetig. Weiter beobachten!`,
+      `There's still room to grow. More generations could push the survival rate even higher.`,
+      `Evolution is working — slowly but steadily. Stay tuned!`,
     ]));
   } else {
-    paras.push(`Diese Challenge ist noch nicht geknackt. Vielleicht mit anderen Parametern?`);
+    paras.push(`This challenge hasn't been cracked yet. Maybe with different parameters?`);
   }
 
   return { headline, paragraphs: paras };
@@ -341,11 +341,11 @@ function describeStrategy(conns: ConnectionProfile[]): string | null {
   if (topSensor) {
     const sensorDesc = humanLabel(topSensor.from, 'sensor');
     return pick([
-      `Die Erfolgsstrategie: „${sensorDesc}" als Kompass für „${moveDesc}". ${pct(topMove.frequency)} der Überlebenden fahren damit.`,
-      `Das Siegerrezept: Die Darwin-Dots spüren „${sensorDesc}" und reagieren mit „${moveDesc}".`,
-      `Taktik-Update: Die Survivors nutzen ihren ${sensorDesc}-Sinn um ${moveDesc.toLowerCase()} zu steuern.`,
+      `The winning strategy: "${sensorDesc}" as compass for "${moveDesc}". ${pct(topMove.frequency)} of survivors are running with it.`,
+      `The secret recipe: The Darwin-Dots sense "${sensorDesc}" and respond with "${moveDesc}".`,
+      `Tactics update: The survivors use their ${sensorDesc} sense to steer ${moveDesc.toLowerCase()}.`,
     ]);
   }
 
-  return `Dominante Aktion: „${moveDesc}" bei ${pct(topMove.frequency)} der Überlebenden.`;
+  return `Dominant action: "${moveDesc}" in ${pct(topMove.frequency)} of survivors.`;
 }

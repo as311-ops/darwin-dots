@@ -8,9 +8,9 @@ interface CommentaryProps {
 
 const TYPE_STYLES: Record<string, { badge: string; badgeBg: string; textColor: string }> = {
   hype: { badge: 'LIVE', badgeBg: 'bg-red-600', textColor: 'text-zinc-100' },
-  analysis: { badge: 'ANALYSE', badgeBg: 'bg-violet-700', textColor: 'text-zinc-300' },
-  concern: { badge: 'ALARM', badgeBg: 'bg-amber-600', textColor: 'text-amber-200' },
-  milestone: { badge: 'MEILENSTEIN', badgeBg: 'bg-emerald-700', textColor: 'text-emerald-200' },
+  analysis: { badge: 'ANALYSIS', badgeBg: 'bg-violet-700', textColor: 'text-zinc-300' },
+  concern: { badge: 'ALERT', badgeBg: 'bg-amber-600', textColor: 'text-amber-200' },
+  milestone: { badge: 'MILESTONE', badgeBg: 'bg-emerald-700', textColor: 'text-emerald-200' },
 };
 
 export default function Commentary({ lines, width }: CommentaryProps) {
@@ -33,7 +33,7 @@ export default function Commentary({ lines, width }: CommentaryProps) {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
         </span>
         <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-          Live-Kommentar
+          Live Commentary
         </span>
       </div>
 
@@ -43,7 +43,7 @@ export default function Commentary({ lines, width }: CommentaryProps) {
       >
         {lines.length === 0 && (
           <div className="text-zinc-600 text-xs italic py-2">
-            Starte die Simulation um den Kommentar zu hören...
+            Start the simulation to hear commentary...
           </div>
         )}
         {[...lines].reverse().map((line, i) => {

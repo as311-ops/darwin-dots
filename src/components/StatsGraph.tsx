@@ -41,7 +41,7 @@ export default function StatsGraph({ history, width, height }: StatsGraphProps) 
       ctx.fillStyle = "#52525b";
       ctx.font = "11px ui-monospace, monospace";
       ctx.textAlign = "center";
-      ctx.fillText("Warte auf Daten...", width / 2, height / 2);
+      ctx.fillText("Waiting for data...", width / 2, height / 2);
       return;
     }
 
@@ -112,11 +112,11 @@ export default function StatsGraph({ history, width, height }: StatsGraphProps) 
 
     ctx.fillStyle = "#10b981";
     ctx.fillRect(pad.left + 4, legendY, 8, 2);
-    ctx.fillText("Überlebensrate", pad.left + 16, legendY + 4);
+    ctx.fillText("Survival Rate", pad.left + 16, legendY + 4);
 
     ctx.fillStyle = "#6366f1";
     ctx.fillRect(pad.left + 110, legendY, 8, 2);
-    ctx.fillText("Diversität", pad.left + 122, legendY + 4);
+    ctx.fillText("Diversity", pad.left + 122, legendY + 4);
   }, [history, width, height]);
 
   return (

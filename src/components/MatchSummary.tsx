@@ -13,10 +13,10 @@ export default function MatchSummary({ summary, onClose }: MatchSummaryProps) {
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-              ABPFIFF
+              FINAL WHISTLE
             </span>
             <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-              Spielzusammenfassung
+              Match Summary
             </span>
           </div>
           <button
@@ -49,7 +49,7 @@ export default function MatchSummary({ summary, onClose }: MatchSummaryProps) {
             onClick={onClose}
             className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-medium py-2 px-4 rounded-md transition-colors"
           >
-            Weiter beobachten
+            Keep watching
           </button>
         </div>
       </div>

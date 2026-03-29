@@ -113,10 +113,10 @@ function traitsFromAgentInfo(info: AgentInfo): CreatureTraits {
   const actionNames = new Set(info.connections.filter(c => !c.to.startsWith('N')).map(c => c.to));
 
   const tags: Tag[] = [];
-  if (info.neuronCount >= 4) tags.push({ text: `${info.neuronCount} Neuronen`, color: 'bg-violet-900 text-violet-300' });
-  if (info.genomeLength >= 30) tags.push({ text: `${info.genomeLength} Gene`, color: 'bg-zinc-800 text-zinc-400' });
-  if (info.responsiveness > 0.8) tags.push({ text: 'Reaktionsfreudig', color: 'bg-emerald-900 text-emerald-300' });
-  if (info.responsiveness < 0.3) tags.push({ text: 'Träge', color: 'bg-amber-900 text-amber-300' });
+  if (info.neuronCount >= 4) tags.push({ text: `${info.neuronCount} Neurons`, color: 'bg-violet-900 text-violet-300' });
+  if (info.genomeLength >= 30) tags.push({ text: `${info.genomeLength} Genes`, color: 'bg-zinc-800 text-zinc-400' });
+  if (info.responsiveness > 0.8) tags.push({ text: 'Responsive', color: 'bg-emerald-900 text-emerald-300' });
+  if (info.responsiveness < 0.3) tags.push({ text: 'Sluggish', color: 'bg-amber-900 text-amber-300' });
 
   return {
     neuronCount: info.neuronCount,
@@ -142,10 +142,10 @@ function traitsFromProfile(profile: GenomeProfile): CreatureTraits {
   const actionConns = new Set(profile.topConnections.filter(c => c.toType === 'action').map(c => c.to));
 
   const tags: Tag[] = [];
-  tags.push({ text: `${profile.avgNeuronCount} Neuronen`, color: 'bg-violet-900 text-violet-300' });
-  tags.push({ text: `${profile.avgGenomeLength} Gene`, color: 'bg-zinc-800 text-zinc-400' });
-  if (profile.connectionCount < 200) tags.push({ text: 'Konvergent', color: 'bg-cyan-900 text-cyan-300' });
-  if (profile.connectionCount > 400) tags.push({ text: 'Divers', color: 'bg-amber-900 text-amber-300' });
+  tags.push({ text: `${profile.avgNeuronCount} Neurons`, color: 'bg-violet-900 text-violet-300' });
+  tags.push({ text: `${profile.avgGenomeLength} Genes`, color: 'bg-zinc-800 text-zinc-400' });
+  if (profile.connectionCount < 200) tags.push({ text: 'Convergent', color: 'bg-cyan-900 text-cyan-300' });
+  if (profile.connectionCount > 400) tags.push({ text: 'Diverse', color: 'bg-amber-900 text-amber-300' });
 
   return {
     neuronCount: Math.round(profile.avgNeuronCount),
@@ -257,18 +257,18 @@ function describeAnatomy(t: CreatureTraits): AnatomyLine[] {
 
   // Senses
   const senses: string[] = [];
-  if (t.hasLocationSense) senses.push('Position');
-  if (t.hasBoundarySense) senses.push('Wandnähe');
-  if (t.hasPopulationSense) senses.push('Artgenossen');
-  if (t.hasBarrierSense) senses.push('Hindernisse');
-  if (t.hasAgeSense) senses.push('Zeitgefühl');
-  if (t.hasSignalSense) senses.push('Geruch');
+  if (t.hasLocationSense) senses.push('Location');
+  if (t.hasBoundarySense) senses.push('Boundary');
+  if (t.hasPopulationSense) senses.push('Population');
+  if (t.hasBarrierSense) senses.push('Barriers');
+  if (t.hasAgeSense) senses.push('Age');
+  if (t.hasSignalSense) senses.push('Scent');
   if (t.hasRandomSense) senses.push('Intuition');
 
   if (senses.length > 0) {
     lines.push({
       icon: '◉',
-      text: `Sinne: ${senses.join(', ')}`,
+      text: `Senses: ${senses.join(', ')}`,
       color: 'text-cyan-400',
     });
   }
@@ -276,35 +276,35 @@ function describeAnatomy(t: CreatureTraits): AnatomyLine[] {
   // Brain
   lines.push({
     icon: '◆',
-    text: `Gehirn: ${t.neuronCount} Neuron${t.neuronCount !== 1 ? 'en' : ''} verarbeiten ${t.genomeLength} Gene`,
+    text: `Brain: ${t.neuronCount} neuron${t.neuronCount !== 1 ? 's' : ''} processing ${t.genomeLength} genes`,
     color: 'text-violet-400',
   });
 
   // Movement
   const moves: string[] = [];
-  if (t.movesForward) moves.push('Geradeaus');
-  if (t.movesSideways) moves.push('Seitwärts');
-  if (t.movesRandom) moves.push('Zufällig');
+  if (t.movesForward) moves.push('Forward');
+  if (t.movesSideways) moves.push('Sideways');
+  if (t.movesRandom) moves.push('Random');
   if (moves.length > 0) {
     lines.push({
       icon: '↗',
-      text: `Bewegung: ${moves.join(', ')}`,
+      text: `Movement: ${moves.join(', ')}`,
       color: 'text-amber-400',
     });
   } else {
-    lines.push({ icon: '·', text: 'Bewegung: Keine dominante Richtung', color: 'text-zinc-600' });
+    lines.push({ icon: '·', text: 'Movement: No dominant direction', color: 'text-zinc-600' });
   }
 
   // Special abilities
   if (t.emitsSignal) {
-    lines.push({ icon: '~', text: 'Hinterlässt Duftspuren für Artgenossen', color: 'text-yellow-300' });
+    lines.push({ icon: '~', text: 'Leaves scent trails for nearby creatures', color: 'text-yellow-300' });
   }
 
   // Responsiveness
   if (t.responsiveness > 0.7) {
-    lines.push({ icon: '⚡', text: 'Hochreaktiv — handelt schnell und entschlossen', color: 'text-emerald-400' });
+    lines.push({ icon: '⚡', text: 'Highly reactive — acts quickly and decisively', color: 'text-emerald-400' });
   } else if (t.responsiveness < 0.3) {
-    lines.push({ icon: '◌', text: 'Bedächtig — reagiert verzögert auf Reize', color: 'text-zinc-500' });
+    lines.push({ icon: '◌', text: 'Deliberate — responds slowly to stimuli', color: 'text-zinc-500' });
   }
 
   return lines;

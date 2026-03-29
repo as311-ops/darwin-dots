@@ -21,11 +21,11 @@ import {
 } from "./simulation/commentary";
 
 const CHALLENGE_LABELS: Record<number, string> = {
-  0: "Kreis", 1: "Rechte Hälfte", 2: "Rechtes Viertel", 3: "String",
-  4: "Mitte", 5: "Mitte", 6: "Ecken", 7: "Ecken",
-  8: "Migration", 9: "Mitte spärlich", 10: "Linkes Achtel",
-  11: "Radioaktive Wände", 12: "An Wand", 13: "Wand berühren",
-  14: "Ost-West", 15: "Nahe Barriere", 16: "Paare", 17: "Sequenz", 18: "Altruismus",
+  0: "Circle", 1: "Right Half", 2: "Right Quarter", 3: "String",
+  4: "Center", 5: "Center", 6: "Corners", 7: "Corners",
+  8: "Migration", 9: "Center Sparse", 10: "Left Eighth",
+  11: "Radioactive Walls", 12: "At Wall", 13: "Touch Wall",
+  14: "East-West", 15: "Near Barrier", 16: "Pairs", 17: "Sequence", 18: "Altruism",
 };
 
 function useWindowWidth() {
@@ -79,7 +79,7 @@ export default function App() {
       prevSurvivors: prevStats?.survivors ?? 0,
       prevDiversity: prevStats?.diversity ?? 0,
       prevProfile: prevProfileRef.current,
-      challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unbekannt',
+      challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unknown',
     });
 
     if (lines.length > 0) {
@@ -94,7 +94,7 @@ export default function App() {
         i === history.length - 1 ? { ...h, genomeProfile: genomeProfile } : h
       );
       const s = generateSummary({
-        challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unbekannt',
+        challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unknown',
         population: config.population,
         totalGenerations: history.length,
         history: historyForSummary,
@@ -161,7 +161,7 @@ export default function App() {
       <ChallengeInfo challenge={config.challenge} />
       <CreatureAvatar
         profile={genomeProfile}
-        label="Typischer Darwin-Dot"
+        label="Typical Darwin-Dot"
       />
       <AgentInspector
         info={agentInfo}
@@ -196,10 +196,10 @@ export default function App() {
 
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight">Darwins Arena</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Darwin's Arena</h1>
         <p className="text-xs text-zinc-500 mt-1">
-          Natürliche Selektion in Echtzeit
-          <span className="text-zinc-600 ml-2">— Klicke auf einen Darwin-Dot</span>
+          Natural selection in real time
+          <span className="text-zinc-600 ml-2">— Click on a Darwin-Dot</span>
         </p>
       </div>
 
