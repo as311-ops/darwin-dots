@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { getChallengeOverlay, type OverlayShape } from "../simulation/challenge-overlay";
 
 export interface SimState {
@@ -37,6 +37,19 @@ export default function SimCanvas({
   onAgentClick,
 }: SimCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const prevGenRef = useRef<number>(0);
+  const [pulse, setPulse] = useState(false);
+
+  // Detect generation change
+  useEffect(() => {
+    const gen = state?.generation ?? 0;
+    if (gen > 0 && gen !== prevGenRef.current) {
+      prevGenRef.current = gen;
+      setPulse(true);
+      const id = setTimeout(() => setPulse(false), 400);
+      return () => clearTimeout(id);
+    }
+  }, [state?.generation]);
 
   const draw = useCallback(
     (ctx: CanvasRenderingContext2D) => {
@@ -46,7 +59,7 @@ export default function SimCanvas({
         ctx.fillStyle = "#71717a";
         ctx.font = "14px ui-monospace, monospace";
         ctx.textAlign = "center";
-        ctx.fillText("Warte auf Simulation...", width / 2, height / 2);
+        ctx.fillText("Waiting for simulation...", width / 2, height / 2);
         return;
       }
 
@@ -212,12 +225,21 @@ export default function SimCanvas({
   );
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="rounded-lg border border-zinc-800 cursor-crosshair"
-      style={{ width, height }}
-      onClick={handleClick}
-    />
+    <div
+      className="rounded-lg transition-shadow duration-400 ease-out"
+      style={{
+        boxShadow: pulse
+          ? '0 0 12px 2px rgba(52, 211, 153, 0.4), inset 0 0 8px 1px rgba(52, 211, 153, 0.15)'
+          : 'none',
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="rounded-lg border border-zinc-800 cursor-crosshair block"
+        style={{ width, height }}
+        onClick={handleClick}
+      />
+    </div>
   );
 }
 
