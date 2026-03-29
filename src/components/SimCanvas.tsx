@@ -46,7 +46,7 @@ export default function SimCanvas({
     if (gen > 0 && gen !== prevGenRef.current) {
       prevGenRef.current = gen;
       setPulse(true);
-      const id = setTimeout(() => setPulse(false), 400);
+      const id = setTimeout(() => setPulse(false), 600);
       return () => clearTimeout(id);
     }
   }, [state?.generation]);
@@ -226,10 +226,10 @@ export default function SimCanvas({
 
   return (
     <div
-      className="rounded-lg transition-shadow duration-400 ease-out"
+      className="rounded-lg transition-shadow duration-500 ease-out"
       style={{
         boxShadow: pulse
-          ? '0 0 12px 2px rgba(52, 211, 153, 0.4), inset 0 0 8px 1px rgba(52, 211, 153, 0.15)'
+          ? '0 0 24px 6px rgba(52, 211, 153, 0.5), 0 0 8px 2px rgba(52, 211, 153, 0.7), inset 0 0 12px 2px rgba(52, 211, 153, 0.2)'
           : 'none',
       }}
     >

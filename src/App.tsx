@@ -186,7 +186,8 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 flex justify-center">
+    <div className="w-full max-w-[1200px]">
       {summary && (
         <MatchSummaryModal
           summary={summary}
@@ -244,6 +245,7 @@ export default function App() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
