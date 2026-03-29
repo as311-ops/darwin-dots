@@ -1,0 +1,311 @@
+import type { AgentInfo } from "../simulation/simulator";
+import type { GenomeProfile } from "../simulation/genome-profile";
+
+interface CreatureAvatarProps {
+  info?: AgentInfo | null;
+  profile?: GenomeProfile | null;
+  label?: string;
+}
+
+/**
+ * ASCII creature visualization that reflects genome traits.
+ *
+ * Anatomy mapping:
+ * - Head size = neuron count
+ * - Eyes = dominant sensors (what the creature "sees")
+ * - Antennae = signal/pheromone sensors
+ * - Body width = genome length
+ * - Legs/movement = dominant action type
+ * - Tail/emission = signal emission
+ * - Posture = responsiveness
+ */
+export default function CreatureAvatar({ info, profile, label }: CreatureAvatarProps) {
+  const traits = info
+    ? traitsFromAgentInfo(info)
+    : profile
+      ? traitsFromProfile(profile)
+      : null;
+
+  if (!traits) return null;
+
+  const lines = buildCreature(traits);
+
+  return (
+    <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3">
+      {label && (
+        <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">
+          {label}
+        </div>
+      )}
+      <pre className="font-mono text-[11px] leading-[14px] text-center select-none">
+        {lines.map((line, i) => (
+          <div key={i} className={line.anim ?? ''}>
+            {line.chars.map((ch, j) => (
+              <span key={j} className={ch.color}>{ch.char}</span>
+            ))}
+          </div>
+        ))}
+      </pre>
+      {/* Trait tags */}
+      <div className="flex flex-wrap gap-1 mt-2 justify-center">
+        {traits.tags.map((tag) => (
+          <span
+            key={tag.text}
+            className={`text-[9px] px-1.5 py-0.5 rounded ${tag.color}`}
+          >
+            {tag.text}
+          </span>
+        ))}
+      </div>
+
+      {/* Anatomy description */}
+      <div className="mt-2 pt-2 border-t border-zinc-800 space-y-0.5">
+        {describeAnatomy(traits).map((line, i) => (
+          <div key={i} className="flex items-start gap-1.5 text-[9px]">
+            <span className={line.color}>{line.icon}</span>
+            <span className="text-zinc-500">{line.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- Types ---
+
+interface ColorChar {
+  char: string;
+  color: string;
+}
+
+interface CreatureLine {
+  chars: ColorChar[];
+  anim?: string;
+}
+
+interface Tag {
+  text: string;
+  color: string;
+}
+
+interface CreatureTraits {
+  neuronCount: number;
+  genomeLength: number;
+  hasLocationSense: boolean;
+  hasBoundarySense: boolean;
+  hasPopulationSense: boolean;
+  hasSignalSense: boolean;
+  hasAgeSense: boolean;
+  hasBarrierSense: boolean;
+  hasRandomSense: boolean;
+  movesForward: boolean;
+  movesSideways: boolean;
+  movesRandom: boolean;
+  emitsSignal: boolean;
+  responsiveness: number;
+  tags: Tag[];
+}
+
+// --- Trait extraction ---
+
+function traitsFromAgentInfo(info: AgentInfo): CreatureTraits {
+  const sensorNames = new Set(info.sensorValues.filter(s => s.value > 0.1).map(s => s.name));
+  const actionNames = new Set(info.connections.filter(c => !c.to.startsWith('N')).map(c => c.to));
+
+  const tags: Tag[] = [];
+  if (info.neuronCount >= 4) tags.push({ text: `${info.neuronCount} Neuronen`, color: 'bg-violet-900 text-violet-300' });
+  if (info.genomeLength >= 30) tags.push({ text: `${info.genomeLength} Gene`, color: 'bg-zinc-800 text-zinc-400' });
+  if (info.responsiveness > 0.8) tags.push({ text: 'Reaktionsfreudig', color: 'bg-emerald-900 text-emerald-300' });
+  if (info.responsiveness < 0.3) tags.push({ text: 'Träge', color: 'bg-amber-900 text-amber-300' });
+
+  return {
+    neuronCount: info.neuronCount,
+    genomeLength: info.genomeLength,
+    hasLocationSense: true,
+    hasBoundarySense: sensorNames.has('BOUNDARY_DIST') || sensorNames.has('BOUNDARY_DIST_X'),
+    hasPopulationSense: sensorNames.has('POPULATION') || sensorNames.has('POPULATION_FWD'),
+    hasSignalSense: sensorNames.has('SIGNAL0') || sensorNames.has('SIGNAL0_FWD'),
+    hasAgeSense: sensorNames.has('AGE'),
+    hasBarrierSense: sensorNames.has('BARRIER_FWD'),
+    hasRandomSense: sensorNames.has('RANDOM'),
+    movesForward: actionNames.has('MOVE_FWD') || actionNames.has('MV_FWD') || actionNames.has('MOVE_FORWARD'),
+    movesSideways: actionNames.has('MOVE_RL') || actionNames.has('MV_RL') || actionNames.has('MOVE_LEFT') || actionNames.has('MOVE_RIGHT'),
+    movesRandom: actionNames.has('MOVE_RANDOM') || actionNames.has('MV_RND'),
+    emitsSignal: actionNames.has('EMIT_SIGNAL0') || actionNames.has('EMIT'),
+    responsiveness: info.responsiveness,
+    tags,
+  };
+}
+
+function traitsFromProfile(profile: GenomeProfile): CreatureTraits {
+  const sensorConns = new Set(profile.topConnections.filter(c => c.fromType === 'sensor').map(c => c.from));
+  const actionConns = new Set(profile.topConnections.filter(c => c.toType === 'action').map(c => c.to));
+
+  const tags: Tag[] = [];
+  tags.push({ text: `${profile.avgNeuronCount} Neuronen`, color: 'bg-violet-900 text-violet-300' });
+  tags.push({ text: `${profile.avgGenomeLength} Gene`, color: 'bg-zinc-800 text-zinc-400' });
+  if (profile.connectionCount < 200) tags.push({ text: 'Konvergent', color: 'bg-cyan-900 text-cyan-300' });
+  if (profile.connectionCount > 400) tags.push({ text: 'Divers', color: 'bg-amber-900 text-amber-300' });
+
+  return {
+    neuronCount: Math.round(profile.avgNeuronCount),
+    genomeLength: profile.avgGenomeLength,
+    hasLocationSense: sensorConns.has('LOC_X') || sensorConns.has('LOC_Y'),
+    hasBoundarySense: sensorConns.has('BDIST') || sensorConns.has('BDIST_X') || sensorConns.has('BDIST_Y'),
+    hasPopulationSense: sensorConns.has('POP') || sensorConns.has('POP_F'),
+    hasSignalSense: sensorConns.has('SIG0') || sensorConns.has('SIG0_F'),
+    hasAgeSense: sensorConns.has('AGE'),
+    hasBarrierSense: sensorConns.has('BAR_F') || sensorConns.has('BAR_LR'),
+    hasRandomSense: sensorConns.has('RND'),
+    movesForward: actionConns.has('MV_FWD'),
+    movesSideways: actionConns.has('MV_RL') || actionConns.has('MV_L') || actionConns.has('MV_R'),
+    movesRandom: actionConns.has('MV_RND'),
+    emitsSignal: actionConns.has('EMIT'),
+    responsiveness: 0.5,
+    tags,
+  };
+}
+
+// --- ASCII creature builder ---
+
+function buildCreature(t: CreatureTraits): CreatureLine[] {
+  const c = (char: string, color: string): ColorChar => ({ char, color });
+  const W = 'text-zinc-100';
+  const G = 'text-zinc-600';
+  const CY = 'text-cyan-400';
+  const VL = 'text-violet-400';
+  const AM = 'text-amber-400';
+  const EM = 'text-emerald-400';
+  const RD = 'text-red-400';
+  const YL = 'text-yellow-300';
+
+  const lines: CreatureLine[] = [];
+
+  // --- Antennae (signal/barrier sensors) ---
+  if (t.hasSignalSense || t.hasBarrierSense) {
+    const left = t.hasSignalSense ? [c('~', YL), c('\\', G)] : [c(' ', G), c(' ', G)];
+    const right = t.hasBarrierSense ? [c('/', G), c('!', RD)] : [c(' ', G), c(' ', G)];
+    lines.push({ chars: [c('  ', G), ...left, c('  ', G), ...right, c(' ', G)], anim: 'animate-antenna' });
+  }
+
+  // --- Emission cloud ---
+  if (t.emitsSignal) {
+    lines.push({ chars: [c('    ', G), c('░░░', YL), c('   ', G)] });
+  }
+
+  // --- Eyes (sensors) ---
+  const eyeCount = [t.hasLocationSense, t.hasBoundarySense, t.hasPopulationSense, t.hasAgeSense].filter(Boolean).length;
+  let eyes: ColorChar[];
+  if (eyeCount >= 3) {
+    eyes = [c(' ', G), c('◉', CY), c('◉', CY), c('◉', CY), c(' ', G)];
+  } else if (eyeCount >= 2) {
+    eyes = [c(' ', G), c(' ◉', CY), c(' ', G), c('◉ ', CY), c(' ', G)];
+  } else {
+    eyes = [c(' ', G), c(' ', G), c('◉', CY), c(' ', G), c(' ', G)];
+  }
+  if (t.hasRandomSense) {
+    eyes.push(c('?', AM));
+  }
+  lines.push({ chars: eyes, anim: 'animate-blink' });
+
+  // --- Head (neuron count) ---
+  const headWidth = Math.min(t.neuronCount + 2, 8);
+  const headChars = '█'.repeat(headWidth);
+  const headPad = ' '.repeat(Math.max(0, Math.floor((9 - headWidth) / 2)));
+  lines.push({ chars: [c(headPad, G), c('╔', VL), c(headChars, VL), c('╗', VL)] });
+
+  // --- Brain (neuron details) ---
+  const brainSymbols = '◆'.repeat(Math.min(t.neuronCount, 6));
+  const brainPad = ' '.repeat(Math.max(0, Math.floor((headWidth - t.neuronCount) / 2)));
+  lines.push({ chars: [c(headPad, G), c('║', VL), c(brainPad, G), c(brainSymbols, VL), c(brainPad.length > 0 ? brainPad : ' ', G), c('║', VL)] });
+  lines.push({ chars: [c(headPad, G), c('╚', VL), c('═'.repeat(headWidth), VL), c('╝', VL)] });
+
+  // --- Body (genome length) ---
+  const bodyWidth = Math.min(Math.floor(t.genomeLength / 6) + 2, 7);
+  const bodyPad = ' '.repeat(Math.max(0, Math.floor((9 - bodyWidth) / 2)));
+  const bodyChar = t.responsiveness > 0.6 ? '▓' : t.responsiveness > 0.3 ? '▒' : '░';
+  lines.push({ chars: [c(bodyPad, G), c(' ', G), c(bodyChar.repeat(bodyWidth), EM), c(' ', G)] });
+  lines.push({ chars: [c(bodyPad, G), c(' ', G), c(bodyChar.repeat(bodyWidth), EM), c(' ', G)] });
+
+  // --- Legs/movement ---
+  const legPad = ' '.repeat(Math.max(0, Math.floor((9 - bodyWidth) / 2)));
+  if (t.movesForward) {
+    lines.push({ chars: [c(legPad, G), c(' ╿', W), c(' '.repeat(Math.max(1, bodyWidth - 2)), G), c('╿ ', W)], anim: 'animate-legs' });
+    lines.push({ chars: [c(legPad, G), c(' │', W), c(' '.repeat(Math.max(1, bodyWidth - 2)), G), c('│ ', W)], anim: 'animate-legs' });
+  } else if (t.movesSideways) {
+    lines.push({ chars: [c(legPad, G), c('╾', AM), c('─'.repeat(bodyWidth), AM), c('╼', AM)], anim: 'animate-legs' });
+  } else if (t.movesRandom) {
+    lines.push({ chars: [c(legPad, G), c(' ╱', W), c(' '.repeat(Math.max(1, bodyWidth - 2)), G), c('╲ ', W)], anim: 'animate-legs' });
+    lines.push({ chars: [c(legPad, G), c('╱', W), c(' '.repeat(Math.max(1, bodyWidth)), G), c('╲', W)], anim: 'animate-legs' });
+  } else {
+    lines.push({ chars: [c(legPad, G), c(' ╵', G), c(' '.repeat(Math.max(1, bodyWidth - 2)), G), c('╵ ', G)] });
+  }
+
+  return lines;
+}
+
+// --- Anatomy description ---
+
+interface AnatomyLine {
+  icon: string;
+  text: string;
+  color: string;
+}
+
+function describeAnatomy(t: CreatureTraits): AnatomyLine[] {
+  const lines: AnatomyLine[] = [];
+
+  // Senses
+  const senses: string[] = [];
+  if (t.hasLocationSense) senses.push('Position');
+  if (t.hasBoundarySense) senses.push('Wandnähe');
+  if (t.hasPopulationSense) senses.push('Artgenossen');
+  if (t.hasBarrierSense) senses.push('Hindernisse');
+  if (t.hasAgeSense) senses.push('Zeitgefühl');
+  if (t.hasSignalSense) senses.push('Geruch');
+  if (t.hasRandomSense) senses.push('Intuition');
+
+  if (senses.length > 0) {
+    lines.push({
+      icon: '◉',
+      text: `Sinne: ${senses.join(', ')}`,
+      color: 'text-cyan-400',
+    });
+  }
+
+  // Brain
+  lines.push({
+    icon: '◆',
+    text: `Gehirn: ${t.neuronCount} Neuron${t.neuronCount !== 1 ? 'en' : ''} verarbeiten ${t.genomeLength} Gene`,
+    color: 'text-violet-400',
+  });
+
+  // Movement
+  const moves: string[] = [];
+  if (t.movesForward) moves.push('Geradeaus');
+  if (t.movesSideways) moves.push('Seitwärts');
+  if (t.movesRandom) moves.push('Zufällig');
+  if (moves.length > 0) {
+    lines.push({
+      icon: '↗',
+      text: `Bewegung: ${moves.join(', ')}`,
+      color: 'text-amber-400',
+    });
+  } else {
+    lines.push({ icon: '·', text: 'Bewegung: Keine dominante Richtung', color: 'text-zinc-600' });
+  }
+
+  // Special abilities
+  if (t.emitsSignal) {
+    lines.push({ icon: '~', text: 'Hinterlässt Duftspuren für Artgenossen', color: 'text-yellow-300' });
+  }
+
+  // Responsiveness
+  if (t.responsiveness > 0.7) {
+    lines.push({ icon: '⚡', text: 'Hochreaktiv — handelt schnell und entschlossen', color: 'text-emerald-400' });
+  } else if (t.responsiveness < 0.3) {
+    lines.push({ icon: '◌', text: 'Bedächtig — reagiert verzögert auf Reize', color: 'text-zinc-500' });
+  }
+
+  return lines;
+}

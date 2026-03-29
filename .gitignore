@@ -1,3 +1,9 @@
+node_modules/
+dist/
 obj/
-tools/*.svg
 build/
+tools/*.svg
+*.local
+.vercel
+.playwright-mcp/
+screenshot-*.png

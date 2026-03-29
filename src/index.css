@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --radius: 0.5rem;
+}
+
+@theme {
+  --animate-antenna: antenna 2.5s ease-in-out infinite;
+  --animate-blink: blink 4s ease-in-out infinite;
+  --animate-legs: legs 1.8s ease-in-out infinite;
+}
+
+@keyframes antenna {
+  0%, 100% { transform: rotate(0deg); transform-origin: center bottom; }
+  30% { transform: rotate(2deg); transform-origin: center bottom; }
+  70% { transform: rotate(-2deg); transform-origin: center bottom; }
+}
+
+@keyframes blink {
+  0%, 42%, 48%, 100% { opacity: 1; }
+  45% { opacity: 0.1; }
+}
+
+@keyframes legs {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(1px); }
+}
