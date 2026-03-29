@@ -1,77 +1,77 @@
 # Darwin-Dots
 
-Evolutionssimulation im Browser. Beobachte, wie neuronale Netze durch natürliche Selektion lernen, Challenges zu meistern.
+Evolution simulation in the browser. Watch neural networks learn to master challenges through natural selection.
 
-## Was ist das?
+## What is this?
 
-Darwin-Dots simuliert eine Population kleiner Punkte ("Dots"), die jeweils ein eigenes neuronales Netz als Gehirn besitzen. Jeder Dot nimmt seine Umgebung wahr (Position, Wandnähe, Artgenossen, Hindernisse) und entscheidet sich basierend auf seinen Genen für Bewegungen. Am Ende jeder Generation überleben nur die Dots, die eine bestimmte Challenge geschafft haben. Ihre Gene werden vererbt und mutiert -- und über viele Generationen entstehen Strategien, die niemand programmiert hat.
+Darwin-Dots simulates a population of tiny dots, each with its own neural network as a brain. Every dot perceives its environment (position, wall proximity, nearby peers, barriers) and decides on movements based on its genes. At the end of each generation, only the dots that completed a given challenge survive. Their genes are inherited and mutated -- and over many generations, strategies emerge that nobody programmed.
 
-Basiert auf dem Originalkonzept von [biosim4](https://github.com/davidrmiller/biosim4) ("I programmed some creatures. They evolved."), komplett neu geschrieben als interaktive Web-App.
+Based on the original concept of [biosim4](https://github.com/davidrmiller/biosim4) ("I programmed some creatures. They evolved."), completely rewritten as an interactive web app.
 
 ## Features
 
-- **19 Challenges** -- von einfacher Navigation bis zu komplexen Aufgaben wie Paarbildung, Altruismus oder Flucht vor radioaktiven Waenden
-- **Echtzeit-Visualisierung** -- Canvas-Rendering mit farbcodierten Dots und Challenge-Overlays
-- **Live-Kommentar** -- Sportreporter-Stil Kommentare zum Evolutionsverlauf
-- **ASCII-Avatar** -- animierte Kreatur-Darstellung, die Genome visuell abbildet (Gehirngroesse, Sinne, Bewegungsart)
-- **Genom-Visualisierung** -- Netzwerkgraph der neuronalen Verbindungen
-- **Presets** -- vorkonfigurierte Szenarien (Schwarmbildung, Genies, Extrembedingungen)
-- **Agent-Inspektor** -- Klicke auf einen Dot, um sein Genom, seine Sinne und sein Verhalten zu untersuchen
-- **Web Worker** -- Simulation laeuft im Hintergrund-Thread, UI bleibt fluessig
+- **19 Challenges** -- from simple navigation to complex tasks like pair formation, altruism, or escaping radioactive walls
+- **Real-time visualization** -- Canvas rendering with color-coded dots and challenge overlays
+- **Live commentary** -- sports-reporter style commentary on the evolution progress
+- **ASCII avatar** -- animated creature display that visually maps genomes (brain size, senses, movement type)
+- **Genome visualization** -- network graph of neural connections
+- **Presets** -- preconfigured scenarios (swarming, geniuses, extreme conditions)
+- **Agent inspector** -- click on a dot to examine its genome, senses, and behavior
+- **Web Worker** -- simulation runs in a background thread, UI stays responsive
 
-## Tech-Stack
+## Tech Stack
 
 - **React 19** + **TypeScript**
-- **Vite** als Build-Tool
-- **Tailwind CSS 4** fuer Styling
-- **Web Workers** fuer die Simulations-Engine
-- **Canvas API** fuer Rendering
+- **Vite** as build tool
+- **Tailwind CSS 4** for styling
+- **Web Workers** for the simulation engine
+- **Canvas API** for rendering
 
-## Lokal starten
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-Oeffnet `http://localhost:5173` im Browser.
+Opens `http://localhost:5173` in the browser.
 
 ## Deployment
 
-Die App ist eine reine Client-Side SPA ohne Backend. Deployment auf Vercel:
+The app is a pure client-side SPA with no backend. Deploy on Vercel:
 
-1. Repo mit Vercel verbinden
-2. Vite wird automatisch erkannt -- kein Setup noetig
-3. Jeder Push deployed automatisch
+1. Connect the repo to Vercel
+2. Vite is auto-detected -- no setup needed
+3. Every push deploys automatically
 
-## Wie funktioniert die Simulation?
+## How does the simulation work?
 
-1. **Initialisierung**: Eine Population von Dots wird mit zufaelligen Genomen erzeugt. Jedes Genom kodiert ein neuronales Netz (Sensor-Neuronen, innere Neuronen, Aktions-Neuronen).
+1. **Initialization**: A population of dots is created with random genomes. Each genome encodes a neural network (sensor neurons, inner neurons, action neurons).
 
-2. **Simulation**: Jeden Schritt liest jeder Dot seine Sensor-Eingaben (Position, Entfernung zu Waenden, Populationsdichte, etc.), verarbeitet sie durch sein neuronales Netz, und fuehrt die resultierende Aktion aus (Bewegung in verschiedene Richtungen, Signale senden).
+2. **Simulation**: Each step, every dot reads its sensor inputs (position, distance to walls, population density, etc.), processes them through its neural network, and executes the resulting action (movement in various directions, emitting signals).
 
-3. **Selektion**: Am Ende einer Generation wird geprueft, welche Dots die aktive Challenge erfuellt haben. Nur diese ueberleben.
+3. **Selection**: At the end of a generation, the system checks which dots fulfilled the active challenge. Only those survive.
 
-4. **Reproduktion**: Die Ueberlebenden vererben ihre Gene an die naechste Generation. Dabei koennen Punktmutationen und Crossover auftreten.
+4. **Reproduction**: Survivors pass their genes to the next generation. Point mutations and crossover can occur.
 
-5. **Evolution**: Ueber viele Generationen optimiert die natuerliche Selektion die neuronalen Netze, bis komplexe Verhaltensweisen entstehen.
+5. **Evolution**: Over many generations, natural selection optimizes the neural networks until complex behaviors emerge.
 
-## Challenges (Auswahl)
+## Challenges (Selection)
 
-| Nr. | Name | Ziel |
-|-----|------|------|
-| 0 | Kreis (SW-Viertel) | Erreiche den Schutzkreis im Suedwesten |
-| 1 | Rechte Haelfte | Ueberquere die Mittellinie |
-| 6 | Ecken | Finde eine der vier Ecken |
-| 7 | Ecken (gewichtet) | Je naeher an einer Ecke, desto besser |
-| 11 | Radioaktive Waende | Fliehe vor heranrueckenden Strahlungswaenden |
-| 16 | Paare bilden | Finde genau einen Partner |
-| 18 | Altruismus | Opfere dich, damit andere ueberleben |
+| # | Name | Goal |
+|---|------|------|
+| 0 | Circle (SW quadrant) | Reach the safe circle in the southwest |
+| 1 | Right half | Cross the center line |
+| 6 | Corners | Find one of the four corners |
+| 7 | Corners (weighted) | The closer to a corner, the better |
+| 11 | Radioactive walls | Flee from approaching radiation walls |
+| 16 | Pair formation | Find exactly one partner |
+| 18 | Altruism | Sacrifice yourself so others survive |
 
-## Herkunft
+## Origin
 
-Dieses Projekt ist ein kompletter Rewrite von [biosim4](https://github.com/davidrmiller/biosim4) (C++ CLI) als interaktive Browser-Anwendung. Die originalen C++ Quellen sind unter `src-cpp/` archiviert.
+This project is a complete rewrite of [biosim4](https://github.com/davidrmiller/biosim4) (C++ CLI) as an interactive browser application. The original C++ sources are archived under `src-cpp/`.
 
-## Lizenz
+## License
 
 MIT
