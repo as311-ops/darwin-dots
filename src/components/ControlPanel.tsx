@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import type { SimState } from "./SimCanvas";
 import type { Genome } from "../simulation/types";
+import { PRESETS } from "./Presets";
+import { isSoundEnabled, setSoundEnabled } from "../simulation/sounds";
 
 export interface SimConfig {
   sizeX: number;
@@ -80,14 +82,13 @@ interface ControlPanelProps {
   onConfigChange: (config: SimConfig) => void;
   state: SimState | null;
   running: boolean;
-  speed: number;
   lastSurvivors: number;
   lastGeneration: number;
   lastAvgFitness: number;
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
-  onSpeedChange: (speed: number) => void;
+  onPreset: (config: SimConfig) => void;
   championGenome?: Genome | null;
   onShareGenome?: () => void;
 }
@@ -182,33 +183,26 @@ export default function ControlPanel({
   onConfigChange,
   state,
   running,
-  speed,
   lastSurvivors,
   lastGeneration,
   lastAvgFitness,
   onStart,
   onPause,
   onReset,
-  onSpeedChange,
+  onPreset,
   championGenome,
   onShareGenome,
 }: ControlPanelProps) {
   const [section, setSection] = useState<"sim" | "genome" | "sensors">("sim");
   const [configOpen, setConfigOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled);
 
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(t);
   }, [copied]);
-
-  // Estimate time remaining
-  const currentGen = state?.generation ?? 0;
-  const remainingGens = config.maxGenerations - currentGen;
-  const eta = running && currentGen > 0
-    ? estimateEta(remainingGens, config.stepsPerGeneration, speed)
-    : null;
 
   const update = useCallback(
     <K extends keyof SimConfig>(key: K, value: SimConfig[K]) => {
@@ -279,7 +273,7 @@ export default function ControlPanel({
               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium
                          py-2 px-3 rounded-md transition-colors"
             >
-              ▶ Start
+              ▶ {state?.generation ? 'Resume' : 'Start'}
             </button>
           ) : (
             <button
@@ -290,57 +284,83 @@ export default function ControlPanel({
               ⏸ Pause
             </button>
           )}
-          <button
-            onClick={onReset}
-            className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-medium
-                       py-2 px-3 rounded-md transition-colors"
-          >
-            ↺ Reset
-          </button>
+          {((state?.generation ?? 0) > 0 || running) && (
+            <button
+              onClick={onReset}
+              className="bg-red-900 hover:bg-red-800 text-red-200 text-xs font-medium
+                         py-2 px-3 rounded-md transition-colors"
+            >
+              ■ Stop
+            </button>
+          )}
         </div>
-        <Slider
-          label="Speed"
-          value={speed}
-          min={1}
-          max={60}
-          step={1}
-          unit=" fps"
-          onChange={onSpeedChange}
-        />
-        {eta !== null && (
-          <div className="text-[10px] text-zinc-500 text-right font-mono">
-            {eta}
-          </div>
-        )}
       </div>
 
-      {/* Share Genome */}
-      {onShareGenome && (
+      {/* Share + Sound */}
+      <div className="flex gap-2">
+        {onShareGenome && (
+          <button
+            onClick={() => {
+              onShareGenome();
+              setCopied(true);
+            }}
+            disabled={!championGenome}
+            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs
+                       text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-40
+                       disabled:cursor-not-allowed"
+          >
+            {copied ? "Copied!" : "Share Genome"}
+          </button>
+        )}
         <button
           onClick={() => {
-            onShareGenome();
-            setCopied(true);
+            const next = !soundOn;
+            setSoundOn(next);
+            setSoundEnabled(next);
           }}
-          disabled={!championGenome}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs
-                     text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-40
-                     disabled:cursor-not-allowed"
+          className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs
+                     text-zinc-400 hover:text-zinc-200 transition-colors"
+          title={soundOn ? "Mute sounds" : "Enable sounds"}
         >
-          {copied ? "Copied!" : "Share Genome"}
+          {soundOn ? "🔊" : "🔇"}
         </button>
-      )}
+      </div>
 
-      {/* Config Toggle */}
+      {/* Config & Presets Toggle */}
       <button
         onClick={() => setConfigOpen((v) => !v)}
         className="flex items-center justify-between w-full bg-zinc-900 border border-zinc-800
                    rounded-lg px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
       >
-        <span>Configuration</span>
+        <span>Settings & Presets</span>
         <span className={`transition-transform ${configOpen ? "rotate-180" : ""}`}>▼</span>
       </button>
 
       {configOpen && <>
+      {/* Presets */}
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3">
+        <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">Presets</div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {PRESETS.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => onPreset({ ...DEFAULT_CONFIG, ...preset.config })}
+              disabled={running}
+              className="text-left bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40
+                         rounded-md px-2.5 py-2 transition-colors group"
+              title={preset.description}
+            >
+              <div className="text-xs text-zinc-200 group-hover:text-white font-medium">
+                {preset.name}
+              </div>
+              <div className="text-[10px] text-zinc-500 leading-tight mt-0.5 line-clamp-2">
+                {preset.description}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Section Tabs */}
       <div className="flex border border-zinc-800 rounded-lg overflow-hidden">
         {(["sim", "genome", "sensors"] as const).map((s) => (
@@ -600,18 +620,3 @@ function SurvivalKPI({
   );
 }
 
-function estimateEta(remainingGens: number, stepsPerGen: number, fps: number): string {
-  // Empirical: at 60fps, ~3 steps/frame are simulated (from worker stepsPerFrame logic)
-  const stepsPerFrame = Math.max(1, Math.min(5, Math.floor(stepsPerGen / 100)));
-  const stepsPerSecond = stepsPerFrame * fps;
-  const totalRemainingSteps = remainingGens * stepsPerGen;
-  const secondsRemaining = totalRemainingSteps / stepsPerSecond;
-  const minutes = secondsRemaining / 60;
-
-  if (minutes < 1) return `~${Math.ceil(secondsRemaining)}s remaining`;
-  if (minutes < 60) return `~${Math.ceil(minutes)} min remaining`;
-  const hours = minutes / 60;
-  if (hours < 24) return `~${hours.toFixed(1)}h remaining`;
-  const days = hours / 24;
-  return `~${days.toFixed(1)} days remaining`;
-}

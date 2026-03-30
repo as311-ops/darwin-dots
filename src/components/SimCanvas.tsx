@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { getChallengeOverlay, type OverlayShape } from "../simulation/challenge-overlay";
+import { CHALLENGE_INFO } from "../simulation/challenge-descriptions";
 
 export interface SimState {
   generation: number;
@@ -39,15 +40,19 @@ export default function SimCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevGenRef = useRef<number>(0);
   const [pulse, setPulse] = useState(false);
+  const spawnStartRef = useRef<number>(0);
 
   // Detect generation change
   useEffect(() => {
     const gen = state?.generation ?? 0;
-    if (gen > 0 && gen !== prevGenRef.current) {
+    if (gen !== prevGenRef.current) {
       prevGenRef.current = gen;
-      setPulse(true);
-      const id = setTimeout(() => setPulse(false), 600);
-      return () => clearTimeout(id);
+      spawnStartRef.current = performance.now();
+      if (gen > 0) {
+        setPulse(true);
+        const id = setTimeout(() => setPulse(false), 600);
+        return () => clearTimeout(id);
+      }
     }
   }, [state?.generation]);
 
@@ -91,7 +96,8 @@ export default function SimCanvas({
 
       // Challenge overlay (survival zone)
       const shapes = getChallengeOverlay(challenge, gridSize.x, gridSize.y, state.simStep, stepsPerGeneration);
-      drawOverlay(ctx, shapes, cellW, cellH, gridSize.x, gridSize.y);
+      const challengeLabel = CHALLENGE_INFO[challenge]?.brief ?? '';
+      drawOverlay(ctx, shapes, cellW, cellH, gridSize.x, gridSize.y, challengeLabel);
 
       // Signal layers (pheromones) as heatmap — only drawn when data available
       if (showSignals && signalLayers && signalLayers.length > 0 && signalLayers[0].length > 0) {
@@ -116,9 +122,21 @@ export default function SimCanvas({
         ctx.fillRect(bx * cellW, by * cellH, cellW, cellH);
       }
 
-      // Agents
+      // Agents — spawn animation: gradually reveal over 2s with ease-in curve
       const agentRadius = Math.max(cellW * 0.35, 1.5);
-      for (let i = 0; i < agentLocations.length; i += 2) {
+      const spawnElapsed = performance.now() - spawnStartRef.current;
+      const spawnDuration = 2000;
+      const totalAgents = agentLocations.length / 2;
+      let visibleCount: number;
+      if (spawnElapsed >= spawnDuration) {
+        visibleCount = totalAgents;
+      } else {
+        const t = spawnElapsed / spawnDuration;
+        const eased = t * t * t; // cubic ease-in: starts slow, accelerates
+        visibleCount = Math.floor(totalAgents * eased);
+      }
+
+      for (let i = 0; i < visibleCount * 2; i += 2) {
         const ax = agentLocations[i];
         const ay = agentLocations[i + 1];
         const ci = (i / 2) * 3;
@@ -187,6 +205,17 @@ export default function SimCanvas({
           ctx.fillText(selectedAgentName, cx, labelY);
         }
       }
+
+      // Compass labels (drawn last, on top of everything)
+      ctx.font = "bold 10px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(161, 161, 170, 0.6)";
+      ctx.textAlign = "center";
+      ctx.fillText("N", width / 2, 12);
+      ctx.fillText("S", width / 2, height - 5);
+      ctx.textAlign = "left";
+      ctx.fillText("W", 4, height / 2 + 4);
+      ctx.textAlign = "right";
+      ctx.fillText("E", width - 4, height / 2 + 4);
     },
     [state, width, height, showSignals, challenge, stepsPerGeneration, selectedAgent, selectedAgentName]
   );
@@ -200,6 +229,19 @@ export default function SimCanvas({
     canvas.width = width;
     canvas.height = height;
     draw(ctx);
+
+    // Continuous redraws during spawn animation
+    const spawnElapsed = performance.now() - spawnStartRef.current;
+    if (spawnElapsed < 2000) {
+      let rafId: number;
+      const animate = () => {
+        if (performance.now() - spawnStartRef.current >= 2000) return;
+        draw(ctx);
+        rafId = requestAnimationFrame(animate);
+      };
+      rafId = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(rafId);
+    }
   }, [draw, width, height]);
 
   const handleClick = useCallback(
@@ -283,7 +325,9 @@ function drawOverlay(
   cellH: number,
   gridSizeX: number,
   gridSizeY: number,
+  label?: string,
 ) {
+  let labelDrawn = false;
   for (const shape of shapes) {
     switch (shape.type) {
       case 'circle': {
@@ -391,6 +435,38 @@ function drawOverlay(
         }
         break;
       }
+    }
+
+    // Draw label once, positioned near the first shape
+    if (!labelDrawn && label && shape.type !== 'radioactive') {
+      labelDrawn = true;
+      let lx: number, ly: number;
+      if (shape.type === 'circle') {
+        lx = shape.cx * cellW + cellW / 2;
+        ly = shape.cy * cellH + cellH / 2 + shape.radius * cellW + 16;
+      } else if (shape.type === 'rect') {
+        lx = shape.x * cellW + (shape.w * cellW) / 2;
+        ly = shape.y * cellH + (shape.h * cellH) / 2;
+      } else {
+        lx = (gridSizeX * cellW) / 2;
+        ly = 20;
+      }
+      // Clamp within canvas bounds
+      ly = Math.min(ly, gridSizeY * cellH - 8);
+      ly = Math.max(ly, 14);
+      lx = Math.max(lx, 10);
+      lx = Math.min(lx, gridSizeX * cellW - 10);
+
+      ctx.font = "10px ui-sans-serif, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      const metrics = ctx.measureText(label);
+      const pad = 4;
+      ctx.fillStyle = "rgba(9, 9, 11, 0.7)";
+      ctx.beginPath();
+      ctx.roundRect(lx - metrics.width / 2 - pad, ly - 10, metrics.width + pad * 2, 14, 3);
+      ctx.fill();
+      ctx.fillStyle = "rgba(16, 185, 129, 0.7)";
+      ctx.fillText(label, lx, ly);
     }
   }
 }

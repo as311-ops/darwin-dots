@@ -10,9 +10,9 @@ import GenomeGraph from "./components/GenomeGraph";
 import Commentary from "./components/Commentary";
 import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
-import PresetSelector from "./components/Presets";
 import CreatureAvatar from "./components/CreatureAvatar";
 import LineageTree from "./components/LineageTree";
+import SplashScreen from "./components/SplashScreen";
 import { useSimulation } from "./hooks/useSimulation";
 import {
   generateCommentary,
@@ -21,6 +21,7 @@ import {
   type MatchSummary,
 } from "./simulation/commentary";
 import { genomeFromHash, genomeShareUrl, clearGenomeHash } from "./simulation/genome-codec";
+import { playStart, playGenerationTick, playBreakthrough, playWipeout, playVictory, playShare, playClick } from "./simulation/sounds";
 import type { Genome } from "./simulation/types";
 
 const CHALLENGE_LABELS: Record<number, string> = {
@@ -46,18 +47,21 @@ export default function App() {
   const [selectedAgent, setSelectedAgent] = useState<{ x: number; y: number } | null>(null);
   const [commentaryLines, setCommentaryLines] = useState<CommentaryLine[]>([]);
   const [summary, setSummary] = useState<MatchSummary | null>(null);
+  const [summaryProfile, setSummaryProfile] = useState<import("./simulation/genome-profile").GenomeProfile | null>(null);
+  const [summaryGenome, setSummaryGenome] = useState<Genome | null>(null);
   // Read seed genome synchronously before simulation init
   const [seedGenome] = useState<Genome | null>(() => {
     const genome = genomeFromHash();
     if (genome) clearGenomeHash();
     return genome;
   });
+  const [showSplash, setShowSplash] = useState(!seedGenome);
   const wasRunning = useRef(false);
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
 
   const {
-    state, running, speed, history, agentInfo, genomeProfile, lineage,
-    start, pause, reset, changeSpeed, updateConfig, inspectAgent,
+    state, running, history, agentInfo, genomeProfile, lineage,
+    start, pause, reset, updateConfig, inspectAgent,
   } = useSimulation(DEFAULT_CONFIG, seedGenome);
 
   const windowWidth = useWindowWidth();
@@ -70,6 +74,7 @@ export default function App() {
     if (!championGenome) return;
     const url = genomeShareUrl(championGenome);
     navigator.clipboard.writeText(url);
+    playShare();
   }, [championGenome]);
 
   // Responsive breakpoints
@@ -103,6 +108,12 @@ export default function App() {
 
     if (lines.length > 0) {
       setCommentaryLines((prev) => [...prev.slice(-30), ...lines]);
+      // Sound triggers based on commentary type
+      if (lines.some(l => l.type === 'hype')) playBreakthrough();
+      else if (lines.some(l => l.type === 'concern' && lastStats.survivors === 0)) playWipeout();
+      else playGenerationTick();
+    } else {
+      playGenerationTick();
     }
     prevProfileRef.current = genomeProfile;
   }, [lastGeneration]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -119,6 +130,8 @@ export default function App() {
         history: historyForSummary,
       });
       setSummary(s);
+      setSummaryProfile(genomeProfile);
+      setSummaryGenome(championGenome);
     }
     wasRunning.current = running;
   }, [running]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -132,16 +145,32 @@ export default function App() {
   );
 
   const handleReset = useCallback(() => {
+    // Generate summary before resetting, save profile/genome for modal
+    if (history.length >= 2) {
+      const historyForSummary = history.map((h, i) =>
+        i === history.length - 1 ? { ...h, genomeProfile: genomeProfile } : h
+      );
+      const s = generateSummary({
+        challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unknown',
+        population: config.population,
+        totalGenerations: history.length,
+        history: historyForSummary,
+      });
+      setSummary(s);
+      setSummaryProfile(genomeProfile);
+      setSummaryGenome(championGenome);
+      playVictory();
+    }
     reset(config);
     setSelectedAgent(null);
     setCommentaryLines([]);
-    setSummary(null);
-  }, [reset, config]);
+  }, [reset, config, history, genomeProfile]);
 
   const handleAgentClick = useCallback(
     (gridX: number, gridY: number) => {
       setSelectedAgent({ x: gridX, y: gridY });
       inspectAgent(gridX, gridY);
+      playClick();
     },
     [inspectAgent]
   );
@@ -150,6 +179,11 @@ export default function App() {
     setSelectedAgent(null);
   }, []);
 
+  const handleStart = useCallback(() => {
+    playStart();
+    start();
+  }, [start]);
+
   const handlePreset = useCallback((presetConfig: SimConfig) => {
     setConfig(presetConfig);
     reset(presetConfig);
@@ -157,6 +191,14 @@ export default function App() {
     setCommentaryLines([]);
     setSummary(null);
   }, [reset]);
+
+  const handleSplashStart = useCallback((presetConfig: SimConfig) => {
+    setConfig(presetConfig);
+    reset(presetConfig);
+    setShowSplash(false);
+    // Auto-start after a brief delay for the spawn animation
+    setTimeout(() => start(), 100);
+  }, [reset, start]);
 
   const lastH = historyLen > 0 ? history[historyLen - 1] : null;
 
@@ -167,45 +209,53 @@ export default function App() {
         onConfigChange={handleConfigChange}
         state={state}
         running={running}
-        speed={speed}
         lastSurvivors={lastH?.survivors ?? 0}
         lastGeneration={lastH?.generation ?? 0}
         lastAvgFitness={lastH?.avgFitness ?? 0}
-        onStart={start}
+        onStart={handleStart}
         onPause={pause}
         onReset={handleReset}
-        onSpeedChange={changeSpeed}
+        onPreset={handlePreset}
         championGenome={championGenome}
         onShareGenome={handleShareGenome}
       />
-      <PresetSelector onSelect={handlePreset} disabled={running} />
       <ChallengeInfo challenge={config.challenge} />
-      <CreatureAvatar
-        profile={genomeProfile}
-        label="Typical Darwin-Dot"
-      />
-      <AgentInspector
-        info={agentInfo}
-        onClose={handleCloseInspector}
-      />
-      <LineageTree snapshots={lineage} />
+      {genomeProfile && (
+        <CreatureAvatar
+          profile={genomeProfile}
+          label="Typical Darwin-Dot"
+        />
+      )}
+      {agentInfo && (
+        <AgentInspector
+          info={agentInfo}
+          onClose={handleCloseInspector}
+        />
+      )}
+      {lineage.length > 0 && <LineageTree snapshots={lineage} />}
     </>
   );
 
-  const statsRow = (
+  const statsRow = historyLen > 0 ? (
     <div className={isNarrow ? "flex flex-col gap-3" : "flex gap-4"}>
       <StatsGraph
         history={history}
         width={isNarrow ? fullW : Math.floor(canvasSize * 0.44)}
         height={150}
       />
-      <GenomeGraph
-        profile={genomeProfile}
-        width={isNarrow ? fullW : Math.floor(canvasSize * 0.54)}
-        height={150}
-      />
+      {genomeProfile && (
+        <GenomeGraph
+          profile={genomeProfile}
+          width={isNarrow ? fullW : Math.floor(canvasSize * 0.54)}
+          height={150}
+        />
+      )}
     </div>
-  );
+  ) : null;
+
+  if (showSplash) {
+    return <SplashScreen onStart={handleSplashStart} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 flex justify-center">
@@ -213,7 +263,14 @@ export default function App() {
       {summary && (
         <MatchSummaryModal
           summary={summary}
-          onClose={() => setSummary(null)}
+          genomeProfile={summaryProfile}
+          championGenome={summaryGenome}
+          onShareGenome={summaryGenome ? () => {
+            const url = genomeShareUrl(summaryGenome);
+            navigator.clipboard.writeText(url);
+            playShare();
+          } : undefined}
+          onClose={() => { setSummary(null); setSummaryProfile(null); setSummaryGenome(null); }}
         />
       )}
 
@@ -243,7 +300,7 @@ export default function App() {
             {sidebar}
           </div>
           {statsRow}
-          <Commentary lines={commentaryLines} width={fullW} />
+          {commentaryLines.length > 0 && <Commentary lines={commentaryLines} width={fullW} />}
         </div>
       ) : (
         /* --- Desktop: two columns --- */
@@ -260,7 +317,7 @@ export default function App() {
               onAgentClick={handleAgentClick}
             />
             {statsRow}
-            <Commentary lines={commentaryLines} width={canvasSize} />
+            {commentaryLines.length > 0 && <Commentary lines={commentaryLines} width={canvasSize} />}
           </div>
           <div className="flex flex-col gap-3 flex-shrink-0" style={{ width: sidebarW }}>
             {sidebar}

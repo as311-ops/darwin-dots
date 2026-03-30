@@ -91,40 +91,24 @@ export function generateCommentary(input: CommentaryInput): CommentaryLine[] {
     }
   }
 
-  // --- Genome analysis ---
+  // --- Strategy analysis (human-readable, no technical connection names) ---
   if (genomeProfile && genomeProfile.topConnections.length > 0) {
-    const top = genomeProfile.topConnections[0];
-
-    // New dominant connection appeared
-    if (prevProfile) {
-      const prevTop = prevProfile.topConnections[0];
-      if (prevTop && (top.from !== prevTop.from || top.to !== prevTop.to)) {
-        lines.push({
-          text: `Tactical shift! The most common connection is now ${connDesc(top)} — previously it was ${connDesc(prevTop)}.`,
-          type: 'analysis',
-          generation,
-        });
-      } else if (top.frequency > 0.7 && (!prevTop || prevTop.frequency < 0.7)) {
-        lines.push({
-          text: `${pct(top.frequency)} of survivors are using ${connDesc(top)} — that's practically a herd mentality!`,
-          type: 'analysis',
-          generation,
-        });
-      }
-    }
-
-    // Describe dominant strategy
-    if (generation > 2 && generation % 5 === 0) {
-      const strategy = describeStrategy(genomeProfile.topConnections);
+    // Describe dominant strategy every generation
+    if (generation > 1) {
+      const strategy = describeStrategy(genomeProfile.topConnections, rate);
       if (strategy) {
         lines.push({ text: strategy, type: 'analysis', generation });
       }
     }
 
-    // Connection count convergence
+    // Convergence signal (no technical details)
     if (prevProfile && genomeProfile.connectionCount < prevProfile.connectionCount * 0.7) {
       lines.push({
-        text: `The genomes are getting leaner — only ${genomeProfile.connectionCount} distinct connection types left. The population is converging!`,
+        text: pick([
+          `The playbook is getting tighter! Fewer tricks, more focus. This squad knows what it wants.`,
+          `Trimming the fat! The Darwin-Dots are ditching bad habits and doubling down on what works.`,
+          `Convergence alert! The population is locking in on a winning formula.`,
+        ]),
         type: 'analysis',
         generation,
       });
@@ -168,6 +152,8 @@ export interface SummaryInput {
 export interface MatchSummary {
   headline: string;
   paragraphs: string[];
+  strategyExplainer?: string;
+  darwinQuote?: string;
 }
 
 export function generateSummary(input: SummaryInput): MatchSummary {
@@ -311,7 +297,48 @@ export function generateSummary(input: SummaryInput): MatchSummary {
     paras.push(`This challenge hasn't been cracked yet. Maybe with different parameters?`);
   }
 
-  return { headline, paragraphs: paras };
+  // --- Strategy explainer (human-readable) ---
+  let strategyExplainer: string | undefined;
+  if (finalProfile && finalProfile.topConnections.length > 0) {
+    const topSensors = [...new Set(
+      finalProfile.topConnections
+        .filter(c => c.fromType === 'sensor' && c.frequency > 0.3)
+        .slice(0, 4)
+        .map(c => humanLabel(c.from, 'sensor'))
+    )];
+
+    if (topSensors.length > 0) {
+      const senseStr = topSensors.join(', ');
+      strategyExplainer = pick([
+        `The winning Darwin-Dots learned to sense ${senseStr} and navigate toward the goal. They didn't read a manual — they evolved this behavior from pure randomness over ${totalGenerations} generations.`,
+        `Here's what the champions figured out: read ${senseStr}, then act on it. No brain, no plan — just ${finalProfile.avgGenomeLength} genes and natural selection doing its thing.`,
+        `The secret sauce? Use ${senseStr} as a compass and let the neural network figure out the rest. Simple? Yes. But it took ${totalGenerations} generations of trial, error, and elimination to discover it.`,
+      ]);
+    } else {
+      strategyExplainer = `The survivors evolved a strategy with no dominant sensory input — pure neural pattern matching. Not sophisticated, but effective. Evolution doesn't care about elegance.`;
+    }
+  }
+
+  // --- Darwin quote ---
+  const darwinQuote = lastRate > 0.5
+    ? pick([
+        `"It is not the strongest of the species that survives, nor the most intelligent that survives. It is the one that is the most adaptable to change." — Well, these little dots just proved me right.`,
+        `"There is grandeur in this view of life... from so simple a beginning, endless forms most beautiful have been evolved." — I said that about finches, but I suppose colored pixels count too.`,
+        `"A man who dares to waste one hour of time has not discovered the value of life." — These dots wasted zero hours. ${pct(lastRate)} survival rate. Efficient little creatures.`,
+        `"The love for all living creatures is the most noble attribute of man." — Watching ${population} dots fight for survival... yes, I suppose this is what I meant.`,
+      ])
+    : lastRate > 0
+      ? pick([
+          `"It is not the strongest that survives..." — In this case, barely anyone survived. But the principle stands! Give them more generations.`,
+          `"Great is the power of steady misrepresentation." — These dots have been misrepresenting competence for ${totalGenerations} generations. Marvelous.`,
+          `"Ignorance more frequently begets confidence than does knowledge." — These dots are confident. Whether they're competent is... another matter entirely.`,
+        ])
+      : pick([
+          `"I am turned into a sort of machine for observing facts and grinding out conclusions." — My conclusion here? These dots need help.`,
+          `"A scientific man ought to have no wishes, no affections — a mere heart of stone." — Even my stone heart feels sorry for these dots.`,
+        ]);
+
+  return { headline, paragraphs: paras, strategyExplainer, darwinQuote };
 }
 
 // --- Helpers ---
@@ -328,24 +355,46 @@ function connDesc(c: ConnectionProfile): string {
   return connectionDescription(c.from, c.fromType, c.to, c.toType, c.avgWeight);
 }
 
-function describeStrategy(conns: ConnectionProfile[]): string | null {
-  const moveConns = conns.filter(c => c.toType === 'action' && c.to.startsWith('MV_'));
+function describeStrategy(conns: ConnectionProfile[], survivalRate: number): string | null {
   const sensorConns = conns.filter(c => c.fromType === 'sensor' && c.frequency > 0.3);
+  const hasMovement = conns.some(c => c.toType === 'action' && c.to.startsWith('MV_'));
 
-  if (moveConns.length === 0) return null;
+  if (!hasMovement) return null;
 
-  const topMove = moveConns[0];
-  const topSensor = sensorConns[0];
-  const moveDesc = humanLabel(topMove.to, 'action');
-
-  if (topSensor) {
-    const sensorDesc = humanLabel(topSensor.from, 'sensor');
+  if (sensorConns.length === 0) {
     return pick([
-      `The winning strategy: "${sensorDesc}" as compass for "${moveDesc}". ${pct(topMove.frequency)} of survivors are running with it.`,
-      `The secret recipe: The Darwin-Dots sense "${sensorDesc}" and respond with "${moveDesc}".`,
-      `Tactics update: The survivors use their ${sensorDesc} sense to steer ${moveDesc.toLowerCase()}.`,
+      `They're just vibing out there — no clear sensory game plan, pure instinct. Bold!`,
+      `Pure chaos on the pitch! No dominant sensors — they're navigating blind and hoping for the best.`,
     ]);
   }
 
-  return `Dominant action: "${moveDesc}" in ${pct(topMove.frequency)} of survivors.`;
+  // Describe what they sense (this is always accurate, unlike movement direction)
+  const senseNames = [...new Set(sensorConns.slice(0, 3).map(c => humanLabel(c.from, 'sensor')))];
+  const senseStr = senseNames.join(' and ');
+  const senseCount = sensorConns.length;
+
+  if (survivalRate > 0.7) {
+    return pick([
+      `WHAT A PLAY! The squad is locked in on "${senseStr}" — reading the field and navigating like pros!`,
+      `This is textbook evolution! "${senseStr}" is their compass and ${pct(survivalRate)} are reaching the goal. The crowd goes wild!`,
+      `They've cracked the code! Sense "${senseStr}", then move with purpose. Championship-level instincts!`,
+      `Unstoppable! ${senseCount} active senses driving the population — "${senseStr}" leading the charge. Pure class!`,
+    ]);
+  }
+
+  if (survivalRate > 0.3) {
+    return pick([
+      `The playbook: read "${senseStr}" and navigate accordingly. Decent formation, getting there!`,
+      `"${senseStr}" is the radar of choice — the squad is finding its rhythm. Not bad, not bad!`,
+      `Coach Evolution has the team tuned into "${senseStr}". Let's see if it pays off!`,
+      `Interesting tactical read! "${senseStr}" as the guiding instinct. ${pct(survivalRate)} making it through.`,
+    ]);
+  }
+
+  return pick([
+    `They're tuning into "${senseStr}" but can't quite translate it into results yet. Needs work!`,
+    `The senses are there — "${senseStr}" — but the execution is shaky. Back to the training ground!`,
+    `"${senseStr}" is on the radar, but these Darwin-Dots need more reps to figure it out!`,
+    `Reading "${senseStr}"... on paper it's a plan, on the field it's chaos. Classic early-season form!`,
+  ]);
 }
