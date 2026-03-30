@@ -12,6 +12,7 @@ import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
 import PresetSelector from "./components/Presets";
 import CreatureAvatar from "./components/CreatureAvatar";
+import LineageTree from "./components/LineageTree";
 import { useSimulation } from "./hooks/useSimulation";
 import {
   generateCommentary,
@@ -19,6 +20,8 @@ import {
   type CommentaryLine,
   type MatchSummary,
 } from "./simulation/commentary";
+import { genomeFromHash, genomeShareUrl, clearGenomeHash } from "./simulation/genome-codec";
+import type { Genome } from "./simulation/types";
 
 const CHALLENGE_LABELS: Record<number, string> = {
   0: "Circle", 1: "Right Half", 2: "Right Quarter", 3: "String",
@@ -43,15 +46,31 @@ export default function App() {
   const [selectedAgent, setSelectedAgent] = useState<{ x: number; y: number } | null>(null);
   const [commentaryLines, setCommentaryLines] = useState<CommentaryLine[]>([]);
   const [summary, setSummary] = useState<MatchSummary | null>(null);
+  // Read seed genome synchronously before simulation init
+  const [seedGenome] = useState<Genome | null>(() => {
+    const genome = genomeFromHash();
+    if (genome) clearGenomeHash();
+    return genome;
+  });
   const wasRunning = useRef(false);
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
 
   const {
-    state, running, speed, history, agentInfo, genomeProfile,
+    state, running, speed, history, agentInfo, genomeProfile, lineage,
     start, pause, reset, changeSpeed, updateConfig, inspectAgent,
-  } = useSimulation(DEFAULT_CONFIG);
+  } = useSimulation(DEFAULT_CONFIG, seedGenome);
 
   const windowWidth = useWindowWidth();
+
+  // Champion genome from last lineage entry
+  const championGenome: Genome | null =
+    lineage.length > 0 ? lineage[lineage.length - 1].genome : null;
+
+  const handleShareGenome = useCallback(() => {
+    if (!championGenome) return;
+    const url = genomeShareUrl(championGenome);
+    navigator.clipboard.writeText(url);
+  }, [championGenome]);
 
   // Responsive breakpoints
   const isNarrow = windowWidth < 900;
@@ -156,6 +175,8 @@ export default function App() {
         onPause={pause}
         onReset={handleReset}
         onSpeedChange={changeSpeed}
+        championGenome={championGenome}
+        onShareGenome={handleShareGenome}
       />
       <PresetSelector onSelect={handlePreset} disabled={running} />
       <ChallengeInfo challenge={config.challenge} />
@@ -167,6 +188,7 @@ export default function App() {
         info={agentInfo}
         onClose={handleCloseInspector}
       />
+      <LineageTree snapshots={lineage} />
     </>
   );
 

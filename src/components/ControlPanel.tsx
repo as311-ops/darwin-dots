@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { SimState } from "./SimCanvas";
+import type { Genome } from "../simulation/types";
 
 export interface SimConfig {
   sizeX: number;
@@ -87,6 +88,8 @@ interface ControlPanelProps {
   onPause: () => void;
   onReset: () => void;
   onSpeedChange: (speed: number) => void;
+  championGenome?: Genome | null;
+  onShareGenome?: () => void;
 }
 
 function Slider({
@@ -187,9 +190,18 @@ export default function ControlPanel({
   onPause,
   onReset,
   onSpeedChange,
+  championGenome,
+  onShareGenome,
 }: ControlPanelProps) {
   const [section, setSection] = useState<"sim" | "genome" | "sensors">("sim");
   const [configOpen, setConfigOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
 
   // Estimate time remaining
   const currentGen = state?.generation ?? 0;
@@ -301,6 +313,22 @@ export default function ControlPanel({
           </div>
         )}
       </div>
+
+      {/* Share Genome */}
+      {onShareGenome && (
+        <button
+          onClick={() => {
+            onShareGenome();
+            setCopied(true);
+          }}
+          disabled={!championGenome}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs
+                     text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-40
+                     disabled:cursor-not-allowed"
+        >
+          {copied ? "Copied!" : "Share Genome"}
+        </button>
+      )}
 
       {/* Config Toggle */}
       <button

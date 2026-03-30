@@ -1,7 +1,7 @@
 // simulator.ts -- Main simulation engine
 // Ported from biosim4: simulator.cpp, endOfSimStep.cpp, endOfGeneration.cpp
 
-import { Coord, Sensor, Action, Challenge, Indiv } from './types';
+import { Coord, Sensor, Action, Challenge, Indiv, type Genome } from './types';
 import { Grid } from './grid';
 import { Peeps } from './peeps';
 import { Signals } from './signals';
@@ -89,7 +89,7 @@ export class Simulator {
   /**
    * Initialize the simulation with the given parameters.
    */
-  init(params?: Partial<SimParams>): void {
+  init(params?: Partial<SimParams>, seedGenome?: Genome): void {
     if (params) {
       this.params = { ...this.params, ...params };
     }
@@ -101,7 +101,7 @@ export class Simulator {
     this.grid.init(this.params.sizeX, this.params.sizeY);
     this.signals.init(this.params.signalLayers, this.params.sizeX, this.params.sizeY);
 
-    initializeGeneration0(this.peeps, this.grid, this.signals, this.params);
+    initializeGeneration0(this.peeps, this.grid, this.signals, this.params, seedGenome);
   }
 
   lastGenerationResult: GenerationResult | null = null;

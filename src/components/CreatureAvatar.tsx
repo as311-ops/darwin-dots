@@ -138,8 +138,10 @@ function traitsFromAgentInfo(info: AgentInfo): CreatureTraits {
 }
 
 function traitsFromProfile(profile: GenomeProfile): CreatureTraits {
-  const sensorConns = new Set(profile.topConnections.filter(c => c.fromType === 'sensor').map(c => c.from));
-  const actionConns = new Set(profile.topConnections.filter(c => c.toType === 'action').map(c => c.to));
+  // Only count connections present in >30% of survivors to avoid flicker
+  const threshold = 0.3;
+  const sensorConns = new Set(profile.topConnections.filter(c => c.fromType === 'sensor' && c.frequency >= threshold).map(c => c.from));
+  const actionConns = new Set(profile.topConnections.filter(c => c.toType === 'action' && c.frequency >= threshold).map(c => c.to));
 
   const tags: Tag[] = [];
   tags.push({ text: `${profile.avgNeuronCount} Neurons`, color: 'bg-violet-900 text-violet-300' });

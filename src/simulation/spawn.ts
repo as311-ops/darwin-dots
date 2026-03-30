@@ -11,6 +11,7 @@ import { createWiringFromGenome } from './neural-net';
 import { passedSurvivalCriterion } from './survival';
 import { randomUint } from './random';
 import { computeGenomeProfile, type GenomeProfile } from './genome-profile';
+import { createChampionSnapshot, type ChampionSnapshot } from './lineage';
 
 export interface GenerationResult {
   survivors: number;
@@ -18,16 +19,19 @@ export interface GenerationResult {
   diversity: number;
   avgFitness: number; // 0..1 average score of survivors
   genomeProfile: GenomeProfile | null;
+  championSnapshot: ChampionSnapshot | null;
 }
 
 /**
  * Initialize generation 0: create random genomes and wire neural nets.
+ * If seedGenome is provided, all individuals start with mutated copies of it.
  */
 export function initializeGeneration0(
   peeps: Peeps,
   grid: Grid,
   signals: Signals,
   params: SimParams,
+  seedGenome?: Genome,
 ): void {
   grid.zeroFill();
   signals.zeroFill();
@@ -40,13 +44,31 @@ export function initializeGeneration0(
     numActions: Action.NUM_ACTIONS,
   };
 
-  for (let i = 1; i <= params.population; i++) {
-    const indiv = peeps.getIndiv(i);
-    indiv.genome = makeRandomGenome(
-      params.genomeInitialLengthMin,
-      params.genomeInitialLengthMax,
-    );
-    indiv.nnet = createWiringFromGenome(indiv.genome, wiringParams);
+  if (seedGenome) {
+    // Seed mode: generate children from the seed genome with light mutation
+    const reproParams = {
+      sexualReproduction: false,
+      chooseParentsByFitness: false,
+      pointMutationRate: params.pointMutationRate,
+      geneInsertionDeletionRate: params.geneInsertionDeletionRate,
+      deletionRatio: params.deletionRatio,
+      genomeMaxLength: params.genomeMaxLength,
+      maxNumberNeurons: params.maxNumberNeurons,
+    };
+    for (let i = 1; i <= params.population; i++) {
+      const indiv = peeps.getIndiv(i);
+      indiv.genome = generateChildGenome([seedGenome], reproParams);
+      indiv.nnet = createWiringFromGenome(indiv.genome, wiringParams);
+    }
+  } else {
+    for (let i = 1; i <= params.population; i++) {
+      const indiv = peeps.getIndiv(i);
+      indiv.genome = makeRandomGenome(
+        params.genomeInitialLengthMin,
+        params.genomeInitialLengthMax,
+      );
+      indiv.nnet = createWiringFromGenome(indiv.genome, wiringParams);
+    }
   }
 }
 
@@ -84,6 +106,12 @@ export function spawnNewGeneration(
     candidates.sort((a, b) => b.score - a.score);
   }
 
+  // Create champion snapshot from best survivor
+  const bestCandidate = candidates[0];
+  const championSnapshot = bestCandidate
+    ? createChampionSnapshot(bestCandidate.genome, bestCandidate.score, generation, params.maxNumberNeurons)
+    : null;
+
   for (const c of candidates) {
     parentGenomes.push(c.genome);
   }
@@ -111,7 +139,7 @@ export function spawnNewGeneration(
   // If no survivors, create random genomes
   if (parentGenomes.length === 0) {
     initializeGeneration0(peeps, grid, signals, params);
-    return { survivors: 0, generation, diversity: 1.0, avgFitness: 0, genomeProfile: null };
+    return { survivors: 0, generation, diversity: 1.0, avgFitness: 0, genomeProfile: null, championSnapshot: null };
   }
 
   // Compute consensus genome profile from survivors
@@ -125,7 +153,7 @@ export function spawnNewGeneration(
   // Generate new population from survivors
   initializeNewGeneration(parentGenomes, peeps, grid, signals, params);
 
-  return { survivors: survivorCount, generation, diversity, avgFitness, genomeProfile };
+  return { survivors: survivorCount, generation, diversity, avgFitness, genomeProfile, championSnapshot };
 }
 
 /**

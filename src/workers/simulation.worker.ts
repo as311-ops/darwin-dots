@@ -2,6 +2,8 @@
 
 import { Simulator, type SimState, type AgentInfo } from '../simulation/simulator';
 import type { GenomeProfile } from '../simulation/genome-profile';
+import type { ChampionSnapshot } from '../simulation/lineage';
+import type { Genome } from '../simulation/types';
 
 interface SimConfig {
   sizeX: number;
@@ -24,17 +26,17 @@ interface SimConfig {
 }
 
 type WorkerCommand =
-  | { type: 'init'; config: SimConfig }
+  | { type: 'init'; config: SimConfig; seedGenome?: Genome }
   | { type: 'start' }
   | { type: 'pause' }
-  | { type: 'reset'; config: SimConfig }
+  | { type: 'reset'; config: SimConfig; seedGenome?: Genome }
   | { type: 'setSpeed'; fps: number }
   | { type: 'updateConfig'; config: Partial<SimConfig> }
   | { type: 'inspectAgent'; x: number; y: number };
 
 type WorkerMessage =
   | { type: 'state'; state: SimState }
-  | { type: 'generation'; stats: { generation: number; survivors: number; population: number; diversity: number; avgFitness: number; genomeProfile: GenomeProfile | null } }
+  | { type: 'generation'; stats: { generation: number; survivors: number; population: number; diversity: number; avgFitness: number; genomeProfile: GenomeProfile | null; championSnapshot: ChampionSnapshot | null } }
   | { type: 'agentInfo'; info: AgentInfo | null }
   | { type: 'ready' };
 
@@ -85,7 +87,7 @@ function sendState(): void {
   ]);
 }
 
-function sendGeneration(result: { survivors: number; diversity: number; avgFitness: number; genomeProfile: GenomeProfile | null }): void {
+function sendGeneration(result: { survivors: number; diversity: number; avgFitness: number; genomeProfile: GenomeProfile | null; championSnapshot: ChampionSnapshot | null }): void {
   if (!simulator) return;
   post({
     type: 'generation',
@@ -96,6 +98,7 @@ function sendGeneration(result: { survivors: number; diversity: number; avgFitne
       diversity: result.diversity,
       avgFitness: result.avgFitness,
       genomeProfile: result.genomeProfile,
+      championSnapshot: result.championSnapshot,
     },
   });
 }
@@ -147,7 +150,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
   switch (msg.type) {
     case 'init': {
       simulator = new Simulator(configToParams(msg.config));
-      simulator.init();
+      simulator.init(undefined, msg.seedGenome);
       sendState();
       post({ type: 'ready' });
       break;
@@ -169,7 +172,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
       running = false;
       stopLoop();
       simulator = new Simulator(configToParams(msg.config));
-      simulator.init();
+      simulator.init(undefined, msg.seedGenome);
       sendState();
       break;
     }

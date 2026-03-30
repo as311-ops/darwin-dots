@@ -7,3 +7,4 @@ tools/*.svg
 .vercel
 .playwright-mcp/
 screenshot-*.png
+tsconfig.tsbuildinfo

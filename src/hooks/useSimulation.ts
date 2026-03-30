@@ -4,12 +4,14 @@ import type { SimConfig } from "../components/ControlPanel";
 import type { GenerationStats } from "../components/StatsGraph";
 import type { AgentInfo } from "../simulation/simulator";
 import type { GenomeProfile } from "../simulation/genome-profile";
+import type { ChampionSnapshot } from "../simulation/lineage";
+import type { Genome } from "../simulation/types";
 
 export type WorkerCommand =
-  | { type: "init"; config: SimConfig }
+  | { type: "init"; config: SimConfig; seedGenome?: Genome }
   | { type: "start" }
   | { type: "pause" }
-  | { type: "reset"; config: SimConfig }
+  | { type: "reset"; config: SimConfig; seedGenome?: Genome }
   | { type: "setSpeed"; fps: number }
   | { type: "updateConfig"; config: Partial<SimConfig> }
   | { type: "inspectAgent"; x: number; y: number };
@@ -20,7 +22,7 @@ export type WorkerMessage =
   | { type: "agentInfo"; info: AgentInfo | null }
   | { type: "ready" };
 
-export function useSimulation(initialConfig: SimConfig) {
+export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | null) {
   const workerRef = useRef<Worker | null>(null);
   const [state, setState] = useState<SimState | null>(null);
   const [running, setRunning] = useState(false);
@@ -29,6 +31,7 @@ export function useSimulation(initialConfig: SimConfig) {
   const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
   const [genomeProfile, setGenomeProfile] = useState<GenomeProfile | null>(null);
   const [firstProfile, setFirstProfile] = useState<GenomeProfile | null>(null);
+  const [lineage, setLineage] = useState<ChampionSnapshot[]>([]);
 
   useEffect(() => {
     const worker = new Worker(
@@ -54,6 +57,10 @@ export function useSimulation(initialConfig: SimConfig) {
             setGenomeProfile(gp);
             setFirstProfile((prev) => prev ?? gp);
           }
+          const cs = msg.stats.championSnapshot;
+          if (cs) {
+            setLineage((prev) => [...prev, cs]);
+          }
           break;
         }
         case "agentInfo":
@@ -65,7 +72,9 @@ export function useSimulation(initialConfig: SimConfig) {
     };
 
     workerRef.current = worker;
-    worker.postMessage({ type: "init", config: initialConfig } satisfies WorkerCommand);
+    const initMsg: WorkerCommand = { type: "init", config: initialConfig };
+    if (seedGenome) initMsg.seedGenome = seedGenome;
+    worker.postMessage(initMsg);
 
     return () => worker.terminate();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -80,14 +89,17 @@ export function useSimulation(initialConfig: SimConfig) {
     setRunning(false);
   }, []);
 
-  const reset = useCallback((config: SimConfig) => {
-    workerRef.current?.postMessage({ type: "reset", config } satisfies WorkerCommand);
+  const reset = useCallback((config: SimConfig, seed?: Genome | null) => {
+    const msg: WorkerCommand = { type: "reset", config };
+    if (seed) msg.seedGenome = seed;
+    workerRef.current?.postMessage(msg);
     setRunning(false);
     setState(null);
     setHistory([]);
     setAgentInfo(null);
     setGenomeProfile(null);
     setFirstProfile(null);
+    setLineage([]);
   }, []);
 
   const changeSpeed = useCallback((fps: number) => {
@@ -104,7 +116,7 @@ export function useSimulation(initialConfig: SimConfig) {
   }, []);
 
   return {
-    state, running, speed, history, agentInfo, genomeProfile, firstProfile,
+    state, running, speed, history, agentInfo, genomeProfile, firstProfile, lineage,
     start, pause, reset, changeSpeed, updateConfig, inspectAgent,
   };
 }
