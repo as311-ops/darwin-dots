@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import type { SimState } from "./SimCanvas";
 import type { Genome } from "../simulation/types";
 import type { PerfStats } from "../hooks/useSimulation";
+import type { CommentaryLine } from "../simulation/commentary";
+import Commentary from "./Commentary";
 import { PRESETS } from "./Presets";
 import { isSoundEnabled, setSoundEnabled } from "../simulation/sounds";
 
@@ -87,6 +89,7 @@ interface ControlPanelProps {
   lastGeneration: number;
   lastAvgFitness: number;
   perfStats: PerfStats | null;
+  commentaryLines: CommentaryLine[];
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
@@ -189,6 +192,7 @@ export default function ControlPanel({
   lastGeneration,
   lastAvgFitness,
   perfStats,
+  commentaryLines,
   onStart,
   onPause,
   onReset,
@@ -224,6 +228,9 @@ export default function ControlPanel({
         avgFitness={lastAvgFitness}
         running={running}
       />
+
+      {/* Live Commentary */}
+      <Commentary lines={commentaryLines} />
 
       {/* Header Stats */}
       <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3 space-y-2">

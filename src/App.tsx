@@ -7,7 +7,6 @@ import ControlPanel, {
 import StatsGraph from "./components/StatsGraph";
 import AgentInspector from "./components/AgentInspector";
 import GenomeGraph from "./components/GenomeGraph";
-import Commentary from "./components/Commentary";
 import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
 import CreatureAvatar from "./components/CreatureAvatar";
@@ -225,6 +224,7 @@ export default function App() {
         lastGeneration={lastH?.generation ?? 0}
         lastAvgFitness={lastH?.avgFitness ?? 0}
         perfStats={perfStats as PerfStats | null}
+        commentaryLines={commentaryLines}
         onStart={handleStart}
         onPause={pause}
         onReset={handleReset}
@@ -323,7 +323,6 @@ export default function App() {
             {sidebar}
           </div>
           {statsRow}
-          {commentaryLines.length > 0 && <Commentary lines={commentaryLines} width={fullW} />}
         </div>
       ) : (
         /* --- Desktop: two columns --- */
@@ -341,7 +340,6 @@ export default function App() {
               onAgentClick={handleAgentClick}
             />
             {statsRow}
-            {commentaryLines.length > 0 && <Commentary lines={commentaryLines} width={canvasSize} />}
           </div>
           <div className="flex flex-col gap-3 flex-shrink-0" style={{ width: sidebarW }}>
             {sidebar}

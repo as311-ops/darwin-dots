@@ -3,7 +3,7 @@ import type { CommentaryLine } from "../simulation/commentary";
 
 interface CommentaryProps {
   lines: CommentaryLine[];
-  width: number;
+  width?: number;
 }
 
 const TYPE_STYLES: Record<string, { badge: string; badgeBg: string; textColor: string }> = {
@@ -25,7 +25,7 @@ export default function Commentary({ lines, width }: CommentaryProps) {
   return (
     <div
       className="bg-zinc-900 rounded-lg border border-zinc-800 flex flex-col"
-      style={{ width }}
+      style={width ? { width } : undefined}
     >
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800">
         <span className="relative flex h-2 w-2">
