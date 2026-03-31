@@ -34,7 +34,7 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
   const workerRef = useRef<Worker | null>(null);
   const [state, setState] = useState<SimState | null>(null);
   const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState(8);
+  const [speed, setSpeed] = useState(33);
   const [history, setHistory] = useState<GenerationStats[]>([]);
   const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
   const [genomeProfile, setGenomeProfile] = useState<GenomeProfile | null>(null);
