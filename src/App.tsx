@@ -232,7 +232,6 @@ export default function App() {
         championGenome={championGenome}
         onShareGenome={handleShareGenome}
       />
-      <ChallengeInfo challenge={config.challenge} />
       {genomeProfile && (
         <CreatureAvatar
           profile={genomeProfile}
@@ -309,6 +308,7 @@ export default function App() {
       {isNarrow ? (
         /* --- Mobile / Narrow: single column --- */
         <div className="flex flex-col gap-4 mx-auto" style={{ maxWidth: fullW }}>
+          <ChallengeInfo challenge={config.challenge} />
           <SimCanvas
             state={state}
             width={canvasSize}
@@ -329,6 +329,7 @@ export default function App() {
         /* --- Desktop: two columns --- */
         <div className="flex gap-5 items-start">
           <div className="flex flex-col gap-4 flex-shrink-0" style={{ width: canvasSize }}>
+            <ChallengeInfo challenge={config.challenge} />
             <SimCanvas
               state={state}
               width={canvasSize}

@@ -29,7 +29,7 @@ export const DEFAULT_CONFIG: SimConfig = {
   sizeX: 128,
   sizeY: 128,
   population: 1000,
-  stepsPerGeneration: 300,
+  stepsPerGeneration: 1000,
   maxGenerations: 500,
   genomeInitialLength: 24,
   maxNumberNeurons: 5,
@@ -262,36 +262,6 @@ export default function ControlPanel({
             <div className="text-zinc-500">Survivors</div>
             <div className="font-mono text-emerald-400">
               {state?.survivors ?? "–"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3 space-y-2">
-        <div className="text-zinc-500 text-xs uppercase tracking-wider">Performance</div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <div className="text-zinc-500">Steps/s</div>
-            <div className="font-mono text-zinc-200">
-              {perfStats ? Math.round(perfStats.stepsPerSecond).toLocaleString() : "–"}
-            </div>
-          </div>
-          <div>
-            <div className="text-zinc-500">Gen/s</div>
-            <div className="font-mono text-zinc-200">
-              {perfStats ? perfStats.generationsPerSecond.toFixed(2) : "–"}
-            </div>
-          </div>
-          <div>
-            <div className="text-zinc-500">Avg Burst</div>
-            <div className="font-mono text-zinc-200">
-              {perfStats ? Math.round(perfStats.avgBurstSteps).toLocaleString() : "–"}
-            </div>
-          </div>
-          <div>
-            <div className="text-zinc-500">State Hz</div>
-            <div className="font-mono text-zinc-200">
-              {perfStats ? perfStats.stateUpdatesPerSecond.toFixed(1) : "–"}
             </div>
           </div>
         </div>
