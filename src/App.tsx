@@ -13,6 +13,7 @@ import ChallengeInfo from "./components/ChallengeInfo";
 import CreatureAvatar from "./components/CreatureAvatar";
 import LineageTree from "./components/LineageTree";
 import SplashScreen from "./components/SplashScreen";
+import DarwinLogo from "./components/DarwinLogo";
 import { useSimulation } from "./hooks/useSimulation";
 import type { PerfStats } from "./hooks/useSimulation";
 import {
@@ -190,6 +191,11 @@ export default function App() {
     start();
   }, [start]);
 
+  const handleMenuClick = useCallback(() => {
+    if (running) pause();
+    setShowSplash(true);
+  }, [running, pause]);
+
   const handlePreset = useCallback((presetConfig: SimConfig) => {
     setConfig(presetConfig);
     reset(presetConfig);
@@ -282,12 +288,22 @@ export default function App() {
       )}
 
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight">Darwin's Arena</h1>
-        <p className="text-xs text-zinc-500 mt-1">
-          Natural selection in real time
-          <span className="text-zinc-600 ml-2">— Click on a Darwin-Dot</span>
-        </p>
+      <div className="mb-4 flex items-center gap-3">
+        <button
+          onClick={handleMenuClick}
+          className="flex-shrink-0 rounded-lg border border-zinc-800 bg-zinc-900 p-1.5
+                     hover:border-emerald-800 hover:bg-zinc-800/60 transition-colors"
+          title="Back to menu"
+        >
+          <DarwinLogo size={32} />
+        </button>
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Darwin's Arena</h1>
+          <p className="text-xs text-zinc-500 mt-1">
+            Natural selection in real time
+            <span className="text-zinc-600 ml-2">— Click on a Darwin-Dot</span>
+          </p>
+        </div>
       </div>
 
       {isNarrow ? (
