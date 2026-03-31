@@ -4,7 +4,9 @@ import type { Genome } from "../simulation/types";
 import type { PerfStats } from "../hooks/useSimulation";
 import type { CommentaryLine } from "../simulation/commentary";
 import Commentary from "./Commentary";
+import CreatureAvatar from "./CreatureAvatar";
 import { PRESETS } from "./Presets";
+import type { GenomeProfile } from "../simulation/genome-profile";
 import { isSoundEnabled, setSoundEnabled } from "../simulation/sounds";
 
 export interface SimConfig {
@@ -98,6 +100,7 @@ interface ControlPanelProps {
   onSpeedChange: (v: number) => void;
   championGenome?: Genome | null;
   onShareGenome?: () => void;
+  genomeProfile?: GenomeProfile | null;
 }
 
 function Slider({
@@ -203,6 +206,7 @@ export default function ControlPanel({
   onSpeedChange,
   championGenome,
   onShareGenome,
+  genomeProfile,
 }: ControlPanelProps) {
   const [section, setSection] = useState<"sim" | "genome" | "sensors">("sim");
   const [configOpen, setConfigOpen] = useState(false);
@@ -231,6 +235,7 @@ export default function ControlPanel({
         generation={lastGeneration}
         avgFitness={lastAvgFitness}
         running={running}
+        genomeProfile={genomeProfile}
       />
 
       {/* Live Commentary */}
@@ -556,12 +561,14 @@ function SurvivalKPI({
   generation,
   avgFitness,
   running,
+  genomeProfile,
 }: {
   survivors: number;
   population: number;
   generation: number;
   avgFitness: number;
   running: boolean;
+  genomeProfile?: GenomeProfile | null;
 }) {
   const rate = population > 0 ? survivors / population : 0;
   const hasData = generation > 0;
@@ -626,7 +633,7 @@ function SurvivalKPI({
       </div>
 
       {/* Label */}
-      <div>
+      <div className="flex-1 min-w-0">
         <div className="text-zinc-400 text-xs">{label}</div>
         <div className="text-zinc-500 text-[10px] mt-0.5">
           {hasData
@@ -639,6 +646,13 @@ function SurvivalKPI({
           </div>
         )}
       </div>
+
+      {/* Typical Darwin Dot */}
+      {genomeProfile && (
+        <div className="flex-shrink-0 opacity-80">
+          <CreatureAvatar profile={genomeProfile} compact />
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ interface CreatureAvatarProps {
   info?: AgentInfo | null;
   profile?: GenomeProfile | null;
   label?: string;
+  compact?: boolean;
 }
 
 /**
@@ -19,7 +20,7 @@ interface CreatureAvatarProps {
  * - Tail/emission = signal emission
  * - Posture = responsiveness
  */
-export default function CreatureAvatar({ info, profile, label }: CreatureAvatarProps) {
+export default function CreatureAvatar({ info, profile, label, compact = false }: CreatureAvatarProps) {
   const traits = info
     ? traitsFromAgentInfo(info)
     : profile
@@ -29,6 +30,20 @@ export default function CreatureAvatar({ info, profile, label }: CreatureAvatarP
   if (!traits) return null;
 
   const lines = buildCreature(traits);
+
+  if (compact) {
+    return (
+      <pre className="font-mono text-[10px] leading-[13px] select-none">
+        {lines.map((line, i) => (
+          <div key={i} className={line.anim ?? ''}>
+            {line.chars.map((ch, j) => (
+              <span key={j} className={ch.color}>{ch.char}</span>
+            ))}
+          </div>
+        ))}
+      </pre>
+    );
+  }
 
   return (
     <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3">

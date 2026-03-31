@@ -8,7 +8,6 @@ import StatsGraph from "./components/StatsGraph";
 import GenomeGraph from "./components/GenomeGraph";
 import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
-import CreatureAvatar from "./components/CreatureAvatar";
 import LineageTree from "./components/LineageTree";
 import SplashScreen from "./components/SplashScreen";
 import DarwinLogo from "./components/DarwinLogo";
@@ -225,13 +224,8 @@ export default function App() {
         onPreset={handlePreset}
         championGenome={championGenome}
         onShareGenome={handleShareGenome}
+        genomeProfile={genomeProfile}
       />
-      {genomeProfile && (
-        <CreatureAvatar
-          profile={genomeProfile}
-          label="Typical Darwin-Dot"
-        />
-      )}
       {lineage.length > 0 && <LineageTree snapshots={lineage} />}
     </>
   );
