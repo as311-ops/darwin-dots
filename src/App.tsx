@@ -5,7 +5,6 @@ import ControlPanel, {
   type SimConfig,
 } from "./components/ControlPanel";
 import StatsGraph from "./components/StatsGraph";
-import AgentInspector from "./components/AgentInspector";
 import GenomeGraph from "./components/GenomeGraph";
 import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
@@ -22,7 +21,7 @@ import {
   type MatchSummary,
 } from "./simulation/commentary";
 import { genomeFromHash, genomeShareUrl, clearGenomeHash } from "./simulation/genome-codec";
-import { playStart, playGenerationTick, playBreakthrough, playWipeout, playVictory, playShare, playClick } from "./simulation/sounds";
+import { playStart, playGenerationTick, playBreakthrough, playWipeout, playVictory, playShare } from "./simulation/sounds";
 import type { Genome } from "./simulation/types";
 
 const CHALLENGE_LABELS: Record<number, string> = {
@@ -45,7 +44,6 @@ function useWindowWidth() {
 
 export default function App() {
   const [config, setConfig] = useState<SimConfig>(DEFAULT_CONFIG);
-  const [selectedAgent, setSelectedAgent] = useState<{ x: number; y: number } | null>(null);
   const [commentaryLines, setCommentaryLines] = useState<CommentaryLine[]>([]);
   const [summary, setSummary] = useState<MatchSummary | null>(null);
   const [summaryProfile, setSummaryProfile] = useState<import("./simulation/genome-profile").GenomeProfile | null>(null);
@@ -61,8 +59,8 @@ export default function App() {
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
 
   const {
-    state, running, history, agentInfo, genomeProfile, lineage, perfStats, speed,
-    start, pause, reset, changeSpeed, updateConfig, inspectAgent,
+    state, running, history, genomeProfile, lineage, perfStats, speed,
+    start, pause, reset, changeSpeed, updateConfig,
   } = useSimulation(DEFAULT_CONFIG, seedGenome);
 
   const windowWidth = useWindowWidth();
@@ -148,7 +146,6 @@ export default function App() {
   const handleReset = useCallback(() => {
     // Always stop simulation first so it never keeps running if anything below throws
     reset(config);
-    setSelectedAgent(null);
     setCommentaryLines([]);
     // Generate summary after stopping (wrapped so iOS audio errors can't swallow the reset)
     if (history.length >= 2) {
@@ -172,18 +169,14 @@ export default function App() {
     }
   }, [reset, config, history, genomeProfile]);
 
-  const handleAgentClick = useCallback(
-    (gridX: number, gridY: number) => {
-      setSelectedAgent({ x: gridX, y: gridY });
-      inspectAgent(gridX, gridY);
-      playClick();
-    },
-    [inspectAgent]
-  );
-
-  const handleCloseInspector = useCallback(() => {
-    setSelectedAgent(null);
-  }, []);
+  const handleToggle = useCallback(() => {
+    if (running) {
+      pause();
+    } else {
+      playStart();
+      start();
+    }
+  }, [running, pause, start]);
 
   const handleStart = useCallback(() => {
     playStart();
@@ -198,7 +191,6 @@ export default function App() {
   const handlePreset = useCallback((presetConfig: SimConfig) => {
     setConfig(presetConfig);
     reset(presetConfig);
-    setSelectedAgent(null);
     setCommentaryLines([]);
     setSummary(null);
   }, [reset]);
@@ -238,12 +230,6 @@ export default function App() {
         <CreatureAvatar
           profile={genomeProfile}
           label="Typical Darwin-Dot"
-        />
-      )}
-      {agentInfo && (
-        <AgentInspector
-          info={agentInfo}
-          onClose={handleCloseInspector}
         />
       )}
       {lineage.length > 0 && <LineageTree snapshots={lineage} />}
@@ -317,9 +303,8 @@ export default function App() {
             height={canvasSize}
             challenge={config.challenge}
             stepsPerGeneration={config.stepsPerGeneration}
-            selectedAgent={selectedAgent}
-            selectedAgentName={agentInfo?.name ?? null}
-            onAgentClick={handleAgentClick}
+            running={running}
+            onToggle={handleToggle}
           />
           <div className="flex flex-col gap-3" style={{ width: fullW }}>
             {sidebar}
@@ -337,9 +322,8 @@ export default function App() {
               height={canvasSize}
               challenge={config.challenge}
               stepsPerGeneration={config.stepsPerGeneration}
-              selectedAgent={selectedAgent}
-              selectedAgentName={agentInfo?.name ?? null}
-              onAgentClick={handleAgentClick}
+              running={running}
+              onToggle={handleToggle}
             />
             {statsRow}
           </div>

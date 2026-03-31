@@ -21,9 +21,8 @@ interface SimCanvasProps {
   showSignals?: boolean;
   challenge?: number;
   stepsPerGeneration?: number;
-  selectedAgent?: { x: number; y: number } | null;
-  selectedAgentName?: string | null;
-  onAgentClick?: (gridX: number, gridY: number) => void;
+  running?: boolean;
+  onToggle?: () => void;
 }
 
 export default function SimCanvas({
@@ -33,13 +32,13 @@ export default function SimCanvas({
   showSignals = true,
   challenge = 6,
   stepsPerGeneration = 300,
-  selectedAgent,
-  selectedAgentName,
-  onAgentClick,
+  running = false,
+  onToggle,
 }: SimCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevGenRef = useRef<number>(0);
   const [pulse, setPulse] = useState(false);
+  const [flashIcon, setFlashIcon] = useState<'play' | 'pause' | null>(null);
   const spawnStartRef = useRef<number>(0);
 
   // Detect generation change
@@ -156,56 +155,6 @@ export default function SimCanvas({
         ctx.fill();
       }
 
-      // Selected agent highlight
-      if (selectedAgent) {
-        ctx.strokeStyle = "#f59e0b";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(
-          selectedAgent.x * cellW + cellW / 2,
-          selectedAgent.y * cellH + cellH / 2,
-          agentRadius + 4,
-          0,
-          Math.PI * 2
-        );
-        ctx.stroke();
-
-        // Crosshair lines
-        ctx.strokeStyle = "rgba(245, 158, 11, 0.3)";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
-        const cx = selectedAgent.x * cellW + cellW / 2;
-        const cy = selectedAgent.y * cellH + cellH / 2;
-        ctx.beginPath();
-        ctx.moveTo(cx, 0);
-        ctx.lineTo(cx, height);
-        ctx.moveTo(0, cy);
-        ctx.lineTo(width, cy);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Name label
-        if (selectedAgentName) {
-          const labelY = cy - agentRadius - 10;
-          ctx.font = "bold 11px ui-sans-serif, system-ui, sans-serif";
-          ctx.textAlign = "center";
-          const metrics = ctx.measureText(selectedAgentName);
-          const pad = 4;
-          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.beginPath();
-          ctx.roundRect(
-            cx - metrics.width / 2 - pad,
-            labelY - 9,
-            metrics.width + pad * 2,
-            14,
-            3,
-          );
-          ctx.fill();
-          ctx.fillStyle = "#f59e0b";
-          ctx.fillText(selectedAgentName, cx, labelY);
-        }
-      }
-
       // Compass labels (drawn last, on top of everything)
       ctx.font = "bold 10px ui-sans-serif, system-ui, sans-serif";
       ctx.fillStyle = "rgba(161, 161, 170, 0.6)";
@@ -217,7 +166,7 @@ export default function SimCanvas({
       ctx.textAlign = "right";
       ctx.fillText("E", width - 4, height / 2 + 4);
     },
-    [state, width, height, showSignals, challenge, stepsPerGeneration, selectedAgent, selectedAgentName]
+    [state, width, height, showSignals, challenge, stepsPerGeneration]
   );
 
   useEffect(() => {
@@ -244,31 +193,17 @@ export default function SimCanvas({
     }
   }, [draw, width, height]);
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!state || !onAgentClick) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const px = (e.clientX - rect.left) * scaleX;
-      const py = (e.clientY - rect.top) * scaleY;
-
-      const gridX = Math.floor(px / (width / state.gridSize.x));
-      const gridY = Math.floor(py / (height / state.gridSize.y));
-
-      if (gridX >= 0 && gridX < state.gridSize.x && gridY >= 0 && gridY < state.gridSize.y) {
-        onAgentClick(gridX, gridY);
-      }
-    },
-    [state, width, height, onAgentClick]
-  );
+  const handleClick = useCallback(() => {
+    if (!onToggle) return;
+    onToggle();
+    setFlashIcon(running ? 'pause' : 'play');
+    const id = setTimeout(() => setFlashIcon(null), 700);
+    return () => clearTimeout(id);
+  }, [onToggle, running]);
 
   return (
     <div
-      className="rounded-lg transition-shadow duration-500 ease-out"
+      className="rounded-lg transition-shadow duration-500 ease-out relative"
       style={{
         boxShadow: pulse
           ? '0 0 24px 6px rgba(52, 211, 153, 0.5), 0 0 8px 2px rgba(52, 211, 153, 0.7), inset 0 0 12px 2px rgba(52, 211, 153, 0.2)'
@@ -277,10 +212,29 @@ export default function SimCanvas({
     >
       <canvas
         ref={canvasRef}
-        className="rounded-lg border border-zinc-800 cursor-crosshair block"
+        className="rounded-lg border border-zinc-800 cursor-pointer block"
         style={{ width, height }}
         onClick={handleClick}
       />
+      {flashIcon && (
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-lg"
+          style={{ animation: 'fadeOutIcon 0.7s ease-out forwards' }}
+        >
+          <div className="bg-black/60 rounded-full p-4">
+            {flashIcon === 'play' ? (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                <polygon points="5,3 19,12 5,21" />
+              </svg>
+            ) : (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                <rect x="5" y="3" width="4" height="18" />
+                <rect x="15" y="3" width="4" height="18" />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
