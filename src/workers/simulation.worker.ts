@@ -44,7 +44,7 @@ type WorkerMessage =
 let simulator: Simulator | null = null;
 let running = false;
 let targetFps = 30;
-let stepsPerUpdate = 17; // steps simulated per animation frame (~2 sec/gen at 1000 steps/gen, 30fps)
+let stepsPerUpdate = 8; // steps simulated per animation frame (~4 sec/gen at 1000 steps/gen, 30fps)
 let animFrameId: ReturnType<typeof setTimeout> | null = null;
 
 function configToParams(config: SimConfig) {
