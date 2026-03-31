@@ -179,7 +179,7 @@ function selectSnapshots(
 
 export default function LineageTree({
   snapshots,
-  maxDisplay = 10,
+  maxDisplay = 3,
 }: LineageTreeProps) {
   const displaySnapshots = useMemo(
     () => selectSnapshots(snapshots, maxDisplay),

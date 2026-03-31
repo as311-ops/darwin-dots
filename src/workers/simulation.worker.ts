@@ -44,6 +44,7 @@ type WorkerMessage =
 let simulator: Simulator | null = null;
 let running = false;
 let targetFps = 30;
+let stepsPerUpdate = 8; // steps simulated per animation frame
 let animFrameId: ReturnType<typeof setTimeout> | null = null;
 
 function configToParams(config: SimConfig) {
@@ -104,17 +105,12 @@ function sendGeneration(result: { survivors: number; diversity: number; avgFitne
   });
 }
 
-let lastStateSent = 0;
 let perfWindowStart = performance.now();
 let perfSteps = 0;
 let perfGenerations = 0;
 let perfLoops = 0;
 let perfBurstSteps = 0;
 let perfStateUpdates = 0;
-const MIN_BURST_STEPS = 8;
-const MAX_BURST_STEPS = 512;
-const MIN_COMPUTE_BUDGET_MS = 8;
-const MAX_COMPUTE_BUDGET_MS = 32;
 
 function resetPerfCounters(now: number = performance.now()): void {
   perfWindowStart = now;
@@ -148,27 +144,8 @@ function simulationLoop(): void {
   const loopStart = performance.now();
 
   try {
-    const frameInterval = 1000 / Math.max(1, targetFps);
-    const computeBudgetMs = Math.max(
-      MIN_COMPUTE_BUDGET_MS,
-      Math.min(MAX_COMPUTE_BUDGET_MS, frameInterval * 0.8),
-    );
-    const burstStepLimit = Math.max(
-      MIN_BURST_STEPS,
-      Math.min(
-        MAX_BURST_STEPS,
-        Math.max(
-          Math.floor(simulator.params.stepsPerGeneration / 8),
-          Math.floor(simulator.params.population / 32),
-        ),
-      ),
-    );
-
     let stepsRun = 0;
-    while (
-      stepsRun < burstStepLimit &&
-      (stepsRun < MIN_BURST_STEPS || (performance.now() - loopStart) < computeBudgetMs)
-    ) {
+    for (let i = 0; i < stepsPerUpdate; i++) {
       const result = simulator.step();
       stepsRun++;
       if (result) {
@@ -181,14 +158,11 @@ function simulationLoop(): void {
     perfLoops++;
     perfBurstSteps += stepsRun;
 
-    // Throttle state sends to ~5fps to prevent main thread overload
-    const now = performance.now();
-    if (now - lastStateSent > 200) {
-      sendState();
-      lastStateSent = now;
-      perfStateUpdates++;
-    }
-    maybeSendPerf(now);
+    // Send canvas state every frame for smooth visuals
+    sendState();
+    perfStateUpdates++;
+
+    maybeSendPerf(performance.now());
   } catch (err) {
     console.error('Simulation error:', err);
     running = false;
@@ -244,7 +218,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
     }
 
     case 'setSpeed': {
-      targetFps = msg.fps;
+      stepsPerUpdate = Math.max(1, msg.fps);
       break;
     }
 

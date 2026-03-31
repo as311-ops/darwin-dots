@@ -61,8 +61,8 @@ export default function App() {
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
 
   const {
-    state, running, history, agentInfo, genomeProfile, lineage, perfStats,
-    start, pause, reset, updateConfig, inspectAgent,
+    state, running, history, agentInfo, genomeProfile, lineage, perfStats, speed,
+    start, pause, reset, changeSpeed, updateConfig, inspectAgent,
   } = useSimulation(DEFAULT_CONFIG, seedGenome);
 
   const windowWidth = useWindowWidth();
@@ -225,6 +225,8 @@ export default function App() {
         lastAvgFitness={lastH?.avgFitness ?? 0}
         perfStats={perfStats as PerfStats | null}
         commentaryLines={commentaryLines}
+        speed={speed}
+        onSpeedChange={changeSpeed}
         onStart={handleStart}
         onPause={pause}
         onReset={handleReset}

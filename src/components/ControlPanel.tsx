@@ -94,6 +94,8 @@ interface ControlPanelProps {
   onPause: () => void;
   onReset: () => void;
   onPreset: (config: SimConfig) => void;
+  speed: number;
+  onSpeedChange: (v: number) => void;
   championGenome?: Genome | null;
   onShareGenome?: () => void;
 }
@@ -197,6 +199,8 @@ export default function ControlPanel({
   onPause,
   onReset,
   onPreset,
+  speed,
+  onSpeedChange,
   championGenome,
   onShareGenome,
 }: ControlPanelProps) {
@@ -304,6 +308,15 @@ export default function ControlPanel({
             </button>
           )}
         </div>
+        <Slider
+          label="Speed"
+          value={speed}
+          min={1}
+          max={300}
+          step={1}
+          unit="×"
+          onChange={onSpeedChange}
+        />
       </div>
 
       {/* Share + Sound */}
