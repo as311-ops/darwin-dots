@@ -31,7 +31,7 @@ export function responseCurve(r: number, kFactor: number): number {
 
 export function executeActions(
   indiv: Indiv,
-  actionLevels: number[],
+  actionLevels: ArrayLike<number>,
   grid: Grid,
   peeps: Peeps,
   signals: Signals,

@@ -277,6 +277,8 @@ export function createWiringFromGenome(
   return {
     connections: finalConnections,
     neurons,
+    actionScratch: new Float32Array(params.numActions),
+    neuronScratch: new Float32Array(neurons.length),
   };
 }
 
@@ -321,12 +323,11 @@ export function feedForward(
   simStep: number,
   getSensor: GetSensorFunc,
   params: FeedForwardParams,
-): number[] {
-  // Action output accumulators, one per action
-  const actionLevels = new Array<number>(params.numActions).fill(0.0);
-
-  // Neuron input accumulators
-  const neuronAccumulators = new Array<number>(nnet.neurons.length).fill(0.0);
+): Float32Array {
+  const actionLevels = nnet.actionScratch;
+  const neuronAccumulators = nnet.neuronScratch;
+  actionLevels.fill(0.0);
+  neuronAccumulators.fill(0.0);
 
   // Flag: have we already computed (tanh'd) the neuron outputs?
   let neuronOutputsComputed = false;

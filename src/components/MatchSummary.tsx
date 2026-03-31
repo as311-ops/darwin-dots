@@ -19,7 +19,8 @@ export default function MatchSummary({
   onClose,
 }: MatchSummaryProps) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-xl w-full shadow-2xl my-8">
         {/* Header bar */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
@@ -109,6 +110,7 @@ export default function MatchSummary({
             Close
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

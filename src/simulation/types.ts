@@ -329,6 +329,8 @@ export interface Neuron {
 export interface NeuralNet {
   connections: Gene[];
   neurons: Neuron[];
+  actionScratch: Float32Array;
+  neuronScratch: Float32Array;
 }
 
 export const INITIAL_NEURON_OUTPUT = 0.5;
@@ -350,6 +352,9 @@ export interface Indiv {
   longProbeDist: number;  // distance for long forward probe
   lastMoveDir: Dir;
   challengeBits: number;  // bits set when indiv accomplishes challenge tasks
+  sensorCacheValues: Float32Array;
+  sensorCacheEpochs: Uint32Array;
+  sensorCacheToken: number;
 }
 
 /**
@@ -363,12 +368,20 @@ export function createDefaultIndiv(): Indiv {
     birthLoc: new Coord(),
     age: 0,
     genome: [],
-    nnet: { connections: [], neurons: [] },
+    nnet: {
+      connections: [],
+      neurons: [],
+      actionScratch: new Float32Array(Action.NUM_ACTIONS),
+      neuronScratch: new Float32Array(0),
+    },
     responsiveness: 0.5,
     oscPeriod: 34,
     longProbeDist: 16,
     lastMoveDir: new Dir(Compass.CENTER),
     challengeBits: 0,
+    sensorCacheValues: new Float32Array(Sensor.NUM_SENSES),
+    sensorCacheEpochs: new Uint32Array(Sensor.NUM_SENSES),
+    sensorCacheToken: 0,
   };
 }
 

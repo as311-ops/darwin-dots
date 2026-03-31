@@ -303,8 +303,15 @@ export class Simulator {
   // ---- Private methods ----
 
   private simStepOneIndiv(indiv: Indiv): void {
+    let sensorCacheToken = (indiv.sensorCacheToken + 1) >>> 0;
+    if (sensorCacheToken === 0) {
+      indiv.sensorCacheEpochs.fill(0);
+      sensorCacheToken = 1;
+    }
+    indiv.sensorCacheToken = sensorCacheToken;
+
     const getSensorFunc = (sensor: number, simStep: number) =>
-      getSensor(indiv, sensor as Sensor, simStep, this.grid, this.peeps, this.signals, this.params);
+      this.getCachedSensorValue(indiv, sensor as Sensor, simStep, sensorCacheToken);
 
     const actionLevels = feedForward(
       indiv.nnet,
@@ -314,6 +321,28 @@ export class Simulator {
     );
 
     executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params);
+  }
+
+  private getCachedSensorValue(
+    indiv: Indiv,
+    sensor: Sensor,
+    simStep: number,
+    cacheToken: number,
+  ): number {
+    if (indiv.sensorCacheEpochs[sensor] !== cacheToken) {
+      indiv.sensorCacheValues[sensor] = getSensor(
+        indiv,
+        sensor,
+        simStep,
+        this.grid,
+        this.peeps,
+        this.signals,
+        this.params,
+      );
+      indiv.sensorCacheEpochs[sensor] = cacheToken;
+    }
+
+    return indiv.sensorCacheValues[sensor];
   }
 
   private endOfSimStep(): void {

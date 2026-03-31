@@ -14,6 +14,7 @@ import CreatureAvatar from "./components/CreatureAvatar";
 import LineageTree from "./components/LineageTree";
 import SplashScreen from "./components/SplashScreen";
 import { useSimulation } from "./hooks/useSimulation";
+import type { PerfStats } from "./hooks/useSimulation";
 import {
   generateCommentary,
   generateSummary,
@@ -60,7 +61,7 @@ export default function App() {
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
 
   const {
-    state, running, history, agentInfo, genomeProfile, lineage,
+    state, running, history, agentInfo, genomeProfile, lineage, perfStats,
     start, pause, reset, updateConfig, inspectAgent,
   } = useSimulation(DEFAULT_CONFIG, seedGenome);
 
@@ -145,25 +146,30 @@ export default function App() {
   );
 
   const handleReset = useCallback(() => {
-    // Generate summary before resetting, save profile/genome for modal
-    if (history.length >= 2) {
-      const historyForSummary = history.map((h, i) =>
-        i === history.length - 1 ? { ...h, genomeProfile: genomeProfile } : h
-      );
-      const s = generateSummary({
-        challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unknown',
-        population: config.population,
-        totalGenerations: history.length,
-        history: historyForSummary,
-      });
-      setSummary(s);
-      setSummaryProfile(genomeProfile);
-      setSummaryGenome(championGenome);
-      playVictory();
-    }
+    // Always stop simulation first so it never keeps running if anything below throws
     reset(config);
     setSelectedAgent(null);
     setCommentaryLines([]);
+    // Generate summary after stopping (wrapped so iOS audio errors can't swallow the reset)
+    if (history.length >= 2) {
+      try {
+        const historyForSummary = history.map((h, i) =>
+          i === history.length - 1 ? { ...h, genomeProfile: genomeProfile } : h
+        );
+        const s = generateSummary({
+          challengeName: CHALLENGE_LABELS[config.challenge] ?? 'Unknown',
+          population: config.population,
+          totalGenerations: history.length,
+          history: historyForSummary,
+        });
+        setSummary(s);
+        setSummaryProfile(genomeProfile);
+        setSummaryGenome(championGenome);
+        playVictory();
+      } catch {
+        // Ignore errors (e.g. iOS AudioContext restrictions)
+      }
+    }
   }, [reset, config, history, genomeProfile]);
 
   const handleAgentClick = useCallback(
@@ -212,6 +218,7 @@ export default function App() {
         lastSurvivors={lastH?.survivors ?? 0}
         lastGeneration={lastH?.generation ?? 0}
         lastAvgFitness={lastH?.avgFitness ?? 0}
+        perfStats={perfStats as PerfStats | null}
         onStart={handleStart}
         onPause={pause}
         onReset={handleReset}

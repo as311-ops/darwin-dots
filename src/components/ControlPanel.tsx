@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type { SimState } from "./SimCanvas";
 import type { Genome } from "../simulation/types";
+import type { PerfStats } from "../hooks/useSimulation";
 import { PRESETS } from "./Presets";
 import { isSoundEnabled, setSoundEnabled } from "../simulation/sounds";
 
@@ -85,6 +86,7 @@ interface ControlPanelProps {
   lastSurvivors: number;
   lastGeneration: number;
   lastAvgFitness: number;
+  perfStats: PerfStats | null;
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
@@ -186,6 +188,7 @@ export default function ControlPanel({
   lastSurvivors,
   lastGeneration,
   lastAvgFitness,
+  perfStats,
   onStart,
   onPause,
   onReset,
@@ -259,6 +262,36 @@ export default function ControlPanel({
             <div className="text-zinc-500">Survivors</div>
             <div className="font-mono text-emerald-400">
               {state?.survivors ?? "–"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3 space-y-2">
+        <div className="text-zinc-500 text-xs uppercase tracking-wider">Performance</div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <div className="text-zinc-500">Steps/s</div>
+            <div className="font-mono text-zinc-200">
+              {perfStats ? Math.round(perfStats.stepsPerSecond).toLocaleString() : "–"}
+            </div>
+          </div>
+          <div>
+            <div className="text-zinc-500">Gen/s</div>
+            <div className="font-mono text-zinc-200">
+              {perfStats ? perfStats.generationsPerSecond.toFixed(2) : "–"}
+            </div>
+          </div>
+          <div>
+            <div className="text-zinc-500">Avg Burst</div>
+            <div className="font-mono text-zinc-200">
+              {perfStats ? Math.round(perfStats.avgBurstSteps).toLocaleString() : "–"}
+            </div>
+          </div>
+          <div>
+            <div className="text-zinc-500">State Hz</div>
+            <div className="font-mono text-zinc-200">
+              {perfStats ? perfStats.stateUpdatesPerSecond.toFixed(1) : "–"}
             </div>
           </div>
         </div>
@@ -619,4 +652,3 @@ function SurvivalKPI({
     </div>
   );
 }
-

@@ -16,10 +16,18 @@ export type WorkerCommand =
   | { type: "updateConfig"; config: Partial<SimConfig> }
   | { type: "inspectAgent"; x: number; y: number };
 
+export interface PerfStats {
+  stepsPerSecond: number;
+  generationsPerSecond: number;
+  stateUpdatesPerSecond: number;
+  avgBurstSteps: number;
+}
+
 export type WorkerMessage =
   | { type: "state"; state: SimState }
   | { type: "generation"; stats: GenerationStats }
   | { type: "agentInfo"; info: AgentInfo | null }
+  | { type: "perf"; stats: PerfStats }
   | { type: "ready" };
 
 export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | null) {
@@ -32,6 +40,7 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
   const [genomeProfile, setGenomeProfile] = useState<GenomeProfile | null>(null);
   const [firstProfile, setFirstProfile] = useState<GenomeProfile | null>(null);
   const [lineage, setLineage] = useState<ChampionSnapshot[]>([]);
+  const [perfStats, setPerfStats] = useState<PerfStats | null>(null);
 
   useEffect(() => {
     const worker = new Worker(
@@ -65,6 +74,9 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
         }
         case "agentInfo":
           setAgentInfo(msg.info);
+          break;
+        case "perf":
+          setPerfStats(msg.stats);
           break;
         case "ready":
           break;
@@ -100,6 +112,7 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
     setGenomeProfile(null);
     setFirstProfile(null);
     setLineage([]);
+    setPerfStats(null);
   }, []);
 
   const changeSpeed = useCallback((fps: number) => {
@@ -116,7 +129,7 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
   }, []);
 
   return {
-    state, running, speed, history, agentInfo, genomeProfile, firstProfile, lineage,
+    state, running, speed, history, agentInfo, genomeProfile, firstProfile, lineage, perfStats,
     start, pause, reset, changeSpeed, updateConfig, inspectAgent,
   };
 }

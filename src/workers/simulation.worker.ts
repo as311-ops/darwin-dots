@@ -38,6 +38,7 @@ type WorkerMessage =
   | { type: 'state'; state: SimState }
   | { type: 'generation'; stats: { generation: number; survivors: number; population: number; diversity: number; avgFitness: number; genomeProfile: GenomeProfile | null; championSnapshot: ChampionSnapshot | null } }
   | { type: 'agentInfo'; info: AgentInfo | null }
+  | { type: 'perf'; stats: { stepsPerSecond: number; generationsPerSecond: number; stateUpdatesPerSecond: number; avgBurstSteps: number } }
   | { type: 'ready' };
 
 let simulator: Simulator | null = null;
@@ -104,36 +105,98 @@ function sendGeneration(result: { survivors: number; diversity: number; avgFitne
 }
 
 let lastStateSent = 0;
-let generationCount = 0;
+let perfWindowStart = performance.now();
+let perfSteps = 0;
+let perfGenerations = 0;
+let perfLoops = 0;
+let perfBurstSteps = 0;
+let perfStateUpdates = 0;
+const MIN_BURST_STEPS = 8;
+const MAX_BURST_STEPS = 512;
+const MIN_COMPUTE_BUDGET_MS = 8;
+const MAX_COMPUTE_BUDGET_MS = 32;
+
+function resetPerfCounters(now: number = performance.now()): void {
+  perfWindowStart = now;
+  perfSteps = 0;
+  perfGenerations = 0;
+  perfLoops = 0;
+  perfBurstSteps = 0;
+  perfStateUpdates = 0;
+}
+
+function maybeSendPerf(now: number): void {
+  const elapsedMs = now - perfWindowStart;
+  if (elapsedMs < 1000) return;
+
+  const elapsedSec = elapsedMs / 1000;
+  post({
+    type: 'perf',
+    stats: {
+      stepsPerSecond: perfSteps / elapsedSec,
+      generationsPerSecond: perfGenerations / elapsedSec,
+      stateUpdatesPerSecond: perfStateUpdates / elapsedSec,
+      avgBurstSteps: perfLoops > 0 ? perfBurstSteps / perfLoops : 0,
+    },
+  });
+
+  resetPerfCounters(now);
+}
 
 function simulationLoop(): void {
   if (!running || !simulator) return;
+  const loopStart = performance.now();
 
   try {
-    const stepsPerFrame = Math.max(1, Math.min(3, Math.floor(simulator.params.stepsPerGeneration / 100)));
+    const frameInterval = 1000 / Math.max(1, targetFps);
+    const computeBudgetMs = Math.max(
+      MIN_COMPUTE_BUDGET_MS,
+      Math.min(MAX_COMPUTE_BUDGET_MS, frameInterval * 0.8),
+    );
+    const burstStepLimit = Math.max(
+      MIN_BURST_STEPS,
+      Math.min(
+        MAX_BURST_STEPS,
+        Math.max(
+          Math.floor(simulator.params.stepsPerGeneration / 8),
+          Math.floor(simulator.params.population / 32),
+        ),
+      ),
+    );
 
-    for (let i = 0; i < stepsPerFrame; i++) {
+    let stepsRun = 0;
+    while (
+      stepsRun < burstStepLimit &&
+      (stepsRun < MIN_BURST_STEPS || (performance.now() - loopStart) < computeBudgetMs)
+    ) {
       const result = simulator.step();
+      stepsRun++;
       if (result) {
-        generationCount++;
+        perfGenerations++;
         sendGeneration(result);
         break;
       }
     }
+    perfSteps += stepsRun;
+    perfLoops++;
+    perfBurstSteps += stepsRun;
 
     // Throttle state sends to ~5fps to prevent main thread overload
     const now = performance.now();
     if (now - lastStateSent > 200) {
       sendState();
       lastStateSent = now;
+      perfStateUpdates++;
     }
+    maybeSendPerf(now);
   } catch (err) {
     console.error('Simulation error:', err);
     running = false;
     return;
   }
 
-  const delay = Math.floor(1000 / targetFps);
+  const elapsed = performance.now() - loopStart;
+  const delay = Math.max(0, Math.floor((1000 / Math.max(1, targetFps)) - elapsed));
   animFrameId = setTimeout(simulationLoop, delay);
 }
 
@@ -151,6 +214,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
     case 'init': {
       simulator = new Simulator(configToParams(msg.config));
       simulator.init(undefined, msg.seedGenome);
+      resetPerfCounters();
       sendState();
       post({ type: 'ready' });
       break;
@@ -158,6 +222,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
 
     case 'start': {
       running = true;
+      resetPerfCounters();
       simulationLoop();
       break;
     }
@@ -173,6 +238,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
       stopLoop();
       simulator = new Simulator(configToParams(msg.config));
       simulator.init(undefined, msg.seedGenome);
+      resetPerfCounters();
       sendState();
       break;
     }
