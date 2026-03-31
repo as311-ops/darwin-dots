@@ -44,8 +44,14 @@ type WorkerMessage =
 let simulator: Simulator | null = null;
 let running = false;
 let targetFps = 30;
-let stepsPerUpdate = 8; // steps simulated per animation frame (~4 sec/gen at 1000 steps/gen, 30fps)
+let stepsPerUpdate = 8;
 let animFrameId: ReturnType<typeof setTimeout> | null = null;
+
+const TARGET_SECS_PER_GEN = 4;
+
+function calcStepsPerUpdate(stepsPerGeneration: number): number {
+  return Math.max(1, Math.round(stepsPerGeneration / TARGET_SECS_PER_GEN / targetFps));
+}
 
 function configToParams(config: SimConfig) {
   return {
@@ -188,6 +194,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
     case 'init': {
       simulator = new Simulator(configToParams(msg.config));
       simulator.init(undefined, msg.seedGenome);
+      stepsPerUpdate = calcStepsPerUpdate(msg.config.stepsPerGeneration);
       resetPerfCounters();
       sendState();
       post({ type: 'ready' });
@@ -212,6 +219,7 @@ self.onmessage = (e: MessageEvent<WorkerCommand>) => {
       stopLoop();
       simulator = new Simulator(configToParams(msg.config));
       simulator.init(undefined, msg.seedGenome);
+      stepsPerUpdate = calcStepsPerUpdate(msg.config.stepsPerGeneration);
       resetPerfCounters();
       sendState();
       break;
