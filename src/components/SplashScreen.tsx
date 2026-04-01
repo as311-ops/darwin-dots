@@ -140,6 +140,16 @@ export default function SplashScreen({ onStart }: SplashScreenProps) {
           <p className="text-[9px] text-zinc-700 mt-1">
             — inspired by biosim4
           </p>
+          <p className="text-[9px] text-zinc-700 mt-4">
+            <a
+              href="https://implisense.com/de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-zinc-500 transition-colors"
+            >
+              Impressum
+            </a>
+          </p>
         </div>
       </div>
     </div>

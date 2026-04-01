@@ -353,76 +353,46 @@ function drawOverlay(
         break;
       }
 
-      case 'radioactive': {
-        const maxZone = Math.floor(gridSizeX / 2) - 4;
-        const wallZone = Math.floor((shape.step / shape.maxSteps) * maxZone);
+      case 'radioactive-wall': {
+        // Per-column danger gradient: intensity = 1/distFromActiveWall
         const totalW = gridSizeX * cellW;
         const totalH = gridSizeY * cellH;
+        const isWest = shape.activeWall === 'west';
 
-        if (wallZone > 0) {
-          // Radioactive zone fill with gradient intensity
-          const zoneW = wallZone * cellW;
-          const zoneH = wallZone * cellH;
-          const intensity = Math.min(0.4, 0.15 + wallZone * 0.005);
-          ctx.fillStyle = `rgba(234, 179, 8, ${intensity})`;
-
-          // Top
-          ctx.fillRect(0, 0, totalW, zoneH);
-          // Bottom
-          ctx.fillRect(0, totalH - zoneH, totalW, zoneH);
-          // Left
-          ctx.fillRect(0, zoneH, zoneW, totalH - 2 * zoneH);
-          // Right
-          ctx.fillRect(totalW - zoneW, zoneH, zoneW, totalH - 2 * zoneH);
-
-          // Radioactive trefoil symbols scattered along the advancing front
-          const symbolSize = Math.max(cellW * 2.5, 10);
-          ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.7, 0.3 + wallZone * 0.008)})`;
-          const spacing = Math.max(symbolSize * 4, 60);
-
-          // Top edge
-          for (let x = spacing; x < totalW - spacing; x += spacing) {
-            drawTrefoil(ctx, x, wallZone * cellH - symbolSize * 0.5, symbolSize);
-          }
-          // Bottom edge
-          for (let x = spacing * 1.5; x < totalW - spacing; x += spacing) {
-            drawTrefoil(ctx, x, totalH - wallZone * cellH + symbolSize * 0.5, symbolSize);
-          }
-          // Left edge
-          for (let y = zoneH + spacing; y < totalH - zoneH - spacing; y += spacing) {
-            drawTrefoil(ctx, wallZone * cellW - symbolSize * 0.5, y, symbolSize);
-          }
-          // Right edge
-          for (let y = zoneH + spacing * 1.5; y < totalH - zoneH - spacing; y += spacing) {
-            drawTrefoil(ctx, totalW - wallZone * cellW + symbolSize * 0.5, y, symbolSize);
-          }
-
-          // Inner boundary line (safe zone border)
-          ctx.strokeStyle = `rgba(234, 179, 8, 0.5)`;
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([4, 4]);
-          ctx.strokeRect(zoneW, zoneH, totalW - 2 * zoneW, totalH - 2 * zoneH);
-          ctx.setLineDash([]);
+        for (let col = 0; col < shape.dangerWidth; col++) {
+          const distFromWall = col + 1;
+          const alpha = Math.min(0.55, 0.55 / distFromWall);
+          if (alpha < 0.01) continue;
+          ctx.fillStyle = `rgba(234, 179, 8, ${alpha})`;
+          const xPos = isWest ? col * cellW : totalW - (col + 1) * cellW;
+          ctx.fillRect(xPos, 0, cellW, totalH);
         }
 
-        // Safe zone label
-        ctx.fillStyle = "rgba(16, 185, 129, 0.4)";
-        ctx.font = `${Math.max(10, cellW * 2)}px ui-monospace, monospace`;
-        ctx.textAlign = "center";
-        const safeW = (gridSizeX - 2 * wallZone);
-        if (safeW > 10) {
-          ctx.fillText(
-            `${safeW}x${safeW}`,
-            totalW / 2,
-            totalH / 2 + cellW,
-          );
+        // Trefoil symbols along the active wall edge
+        const symbolSize = Math.max(cellW * 2.5, 10);
+        ctx.fillStyle = 'rgba(234, 179, 8, 0.7)';
+        const spacing = Math.max(symbolSize * 4, 60);
+        const wallX = isWest ? symbolSize * 0.5 : totalW - symbolSize * 0.5;
+        for (let y = spacing; y < totalH - spacing / 2; y += spacing) {
+          drawTrefoil(ctx, wallX, y, symbolSize);
         }
+
+        // Boundary line at midpoint (safe side starts here)
+        const midX = isWest ? shape.dangerWidth * cellW : totalW - shape.dangerWidth * cellW;
+        ctx.strokeStyle = 'rgba(234, 179, 8, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(midX, 0);
+        ctx.lineTo(midX, totalH);
+        ctx.stroke();
+        ctx.setLineDash([]);
         break;
       }
     }
 
     // Draw label once, positioned near the first shape
-    if (!labelDrawn && label && shape.type !== 'radioactive') {
+    if (!labelDrawn && label && shape.type !== 'radioactive-wall') {
       labelDrawn = true;
       let lx: number, ly: number;
       if (shape.type === 'circle') {
