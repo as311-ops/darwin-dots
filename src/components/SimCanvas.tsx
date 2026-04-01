@@ -11,6 +11,7 @@ export interface SimState {
   agentColors: Uint8Array;
   barrierLocations: Uint16Array;
   signalLayers: Float32Array[];
+  killEvents: Float32Array;
   gridSize: { x: number; y: number };
 }
 
@@ -40,6 +41,9 @@ export default function SimCanvas({
   const [pulse, setPulse] = useState(false);
   const [flashIcon, setFlashIcon] = useState<'play' | 'pause' | null>(null);
   const spawnStartRef = useRef<number>(0);
+  const killParticlesRef = useRef<{ x: number; y: number; birthTime: number }[]>([]);
+  const KILL_FADE_MS = 1400;
+  const [recording, setRecording] = useState(false);
 
   // Detect generation change
   useEffect(() => {
@@ -54,6 +58,15 @@ export default function SimCanvas({
       }
     }
   }, [state?.generation]);
+
+  // Absorb incoming kill events from simulation state
+  useEffect(() => {
+    if (!state?.killEvents?.length) return;
+    const now = performance.now();
+    for (let i = 0; i < state.killEvents.length; i += 2) {
+      killParticlesRef.current.push({ x: state.killEvents[i], y: state.killEvents[i + 1], birthTime: now });
+    }
+  }, [state?.killEvents]);
 
   const draw = useCallback(
     (ctx: CanvasRenderingContext2D) => {
@@ -155,6 +168,24 @@ export default function SimCanvas({
         ctx.fill();
       }
 
+      // Kill events — skull emoji fades out over ~1.4s
+      const now = performance.now();
+      const skullSize = Math.max(cellW * 2.2, 14);
+      ctx.font = `${skullSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const alive: typeof killParticlesRef.current = [];
+      for (const p of killParticlesRef.current) {
+        const age = now - p.birthTime;
+        if (age >= KILL_FADE_MS) continue;
+        alive.push(p);
+        const t = age / KILL_FADE_MS;
+        ctx.globalAlpha = (1 - t) * 0.9;
+        ctx.fillText('💀', p.x * cellW + cellW / 2, p.y * cellH + cellH / 2);
+      }
+      ctx.globalAlpha = 1;
+      killParticlesRef.current = alive;
+
       // Compass labels (drawn last, on top of everything)
       ctx.font = "bold 10px ui-sans-serif, system-ui, sans-serif";
       ctx.fillStyle = "rgba(161, 161, 170, 0.6)";
@@ -201,6 +232,40 @@ export default function SimCanvas({
     return () => clearTimeout(id);
   }, [onToggle, running]);
 
+  const handleScreenshot = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `darwin-dots-gen${state?.generation ?? 0}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }, [state?.generation]);
+
+  const handleRecord = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || recording) return;
+    const stream = (canvas as HTMLCanvasElement & { captureStream(fps?: number): MediaStream }).captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `darwin-dots-gen${state?.generation ?? 0}.webm`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      setRecording(false);
+    };
+    setRecording(true);
+    recorder.start();
+    setTimeout(() => recorder.stop(), 3000);
+  }, [recording, state?.generation]);
+
   return (
     <div
       className="rounded-lg transition-shadow duration-500 ease-out relative"
@@ -216,6 +281,41 @@ export default function SimCanvas({
         style={{ width, height }}
         onClick={handleClick}
       />
+      {/* Screenshot / Record buttons */}
+      <div className="absolute bottom-2 right-2 flex gap-1.5 pointer-events-auto">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleScreenshot(); }}
+          title="Screenshot (PNG)"
+          className="bg-black/50 hover:bg-black/80 text-zinc-400 hover:text-white rounded p-1.5 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleRecord(); }}
+          title={recording ? 'Aufnahme läuft… (3s)' : 'Video aufnehmen (3s WebM)'}
+          disabled={recording}
+          className={`rounded p-1.5 transition-colors ${
+            recording
+              ? 'bg-red-600/80 text-white cursor-not-allowed'
+              : 'bg-black/50 hover:bg-black/80 text-zinc-400 hover:text-red-400'
+          }`}
+        >
+          {recording ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="6"/>
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2"/>
+            </svg>
+          )}
+        </button>
+      </div>
+
       {flashIcon && (
         <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-lg"
@@ -323,76 +423,46 @@ function drawOverlay(
         break;
       }
 
-      case 'radioactive': {
-        const maxZone = Math.floor(gridSizeX / 2) - 4;
-        const wallZone = Math.floor((shape.step / shape.maxSteps) * maxZone);
+      case 'radioactive-wall': {
+        // Per-column danger gradient: intensity = 1/distFromActiveWall
         const totalW = gridSizeX * cellW;
         const totalH = gridSizeY * cellH;
+        const isWest = shape.activeWall === 'west';
 
-        if (wallZone > 0) {
-          // Radioactive zone fill with gradient intensity
-          const zoneW = wallZone * cellW;
-          const zoneH = wallZone * cellH;
-          const intensity = Math.min(0.4, 0.15 + wallZone * 0.005);
-          ctx.fillStyle = `rgba(234, 179, 8, ${intensity})`;
-
-          // Top
-          ctx.fillRect(0, 0, totalW, zoneH);
-          // Bottom
-          ctx.fillRect(0, totalH - zoneH, totalW, zoneH);
-          // Left
-          ctx.fillRect(0, zoneH, zoneW, totalH - 2 * zoneH);
-          // Right
-          ctx.fillRect(totalW - zoneW, zoneH, zoneW, totalH - 2 * zoneH);
-
-          // Radioactive trefoil symbols scattered along the advancing front
-          const symbolSize = Math.max(cellW * 2.5, 10);
-          ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.7, 0.3 + wallZone * 0.008)})`;
-          const spacing = Math.max(symbolSize * 4, 60);
-
-          // Top edge
-          for (let x = spacing; x < totalW - spacing; x += spacing) {
-            drawTrefoil(ctx, x, wallZone * cellH - symbolSize * 0.5, symbolSize);
-          }
-          // Bottom edge
-          for (let x = spacing * 1.5; x < totalW - spacing; x += spacing) {
-            drawTrefoil(ctx, x, totalH - wallZone * cellH + symbolSize * 0.5, symbolSize);
-          }
-          // Left edge
-          for (let y = zoneH + spacing; y < totalH - zoneH - spacing; y += spacing) {
-            drawTrefoil(ctx, wallZone * cellW - symbolSize * 0.5, y, symbolSize);
-          }
-          // Right edge
-          for (let y = zoneH + spacing * 1.5; y < totalH - zoneH - spacing; y += spacing) {
-            drawTrefoil(ctx, totalW - wallZone * cellW + symbolSize * 0.5, y, symbolSize);
-          }
-
-          // Inner boundary line (safe zone border)
-          ctx.strokeStyle = `rgba(234, 179, 8, 0.5)`;
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([4, 4]);
-          ctx.strokeRect(zoneW, zoneH, totalW - 2 * zoneW, totalH - 2 * zoneH);
-          ctx.setLineDash([]);
+        for (let col = 0; col < shape.dangerWidth; col++) {
+          const distFromWall = col + 1;
+          const alpha = Math.min(0.55, 0.55 / distFromWall);
+          if (alpha < 0.01) continue;
+          ctx.fillStyle = `rgba(234, 179, 8, ${alpha})`;
+          const xPos = isWest ? col * cellW : totalW - (col + 1) * cellW;
+          ctx.fillRect(xPos, 0, cellW, totalH);
         }
 
-        // Safe zone label
-        ctx.fillStyle = "rgba(16, 185, 129, 0.4)";
-        ctx.font = `${Math.max(10, cellW * 2)}px ui-monospace, monospace`;
-        ctx.textAlign = "center";
-        const safeW = (gridSizeX - 2 * wallZone);
-        if (safeW > 10) {
-          ctx.fillText(
-            `${safeW}x${safeW}`,
-            totalW / 2,
-            totalH / 2 + cellW,
-          );
+        // Trefoil symbols along the active wall edge
+        const symbolSize = Math.max(cellW * 2.5, 10);
+        ctx.fillStyle = 'rgba(234, 179, 8, 0.7)';
+        const spacing = Math.max(symbolSize * 4, 60);
+        const wallX = isWest ? symbolSize * 0.5 : totalW - symbolSize * 0.5;
+        for (let y = spacing; y < totalH - spacing / 2; y += spacing) {
+          drawTrefoil(ctx, wallX, y, symbolSize);
         }
+
+        // Boundary line at midpoint (safe side starts here)
+        const midX = isWest ? shape.dangerWidth * cellW : totalW - shape.dangerWidth * cellW;
+        ctx.strokeStyle = 'rgba(234, 179, 8, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(midX, 0);
+        ctx.lineTo(midX, totalH);
+        ctx.stroke();
+        ctx.setLineDash([]);
         break;
       }
     }
 
     // Draw label once, positioned near the first shape
-    if (!labelDrawn && label && shape.type !== 'radioactive') {
+    if (!labelDrawn && label && shape.type !== 'radioactive-wall') {
       labelDrawn = true;
       let lx: number, ly: number;
       if (shape.type === 'circle') {

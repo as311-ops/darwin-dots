@@ -326,6 +326,16 @@ export default function App() {
           </div>
         </div>
       )}
+      <div className="mt-6 text-center">
+        <a
+          href="https://implisense.com/de"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[9px] text-zinc-700 hover:text-zinc-500 transition-colors"
+        >
+          Impressum
+        </a>
+      </div>
     </div>
     </div>
   );

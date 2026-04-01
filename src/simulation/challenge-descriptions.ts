@@ -64,8 +64,8 @@ export const CHALLENGE_INFO: Record<number, ChallengeInfo> = {
   },
   11: {
     title: "Radioactive Walls",
-    brief: "Flee from the advancing radiation walls.",
-    flavor: "The walls are irradiated. With every step, the death zone closes in from all four sides. The safe zone shrinks relentlessly. Only those who flee to the center in time survive. A race against the invisible threat. ☢",
+    brief: "Survive alternating radioactive walls — west, then east.",
+    flavor: "First half of the generation, the west wall glows deadly. The closer you are, the higher the chance of death. Then the radiation switches to the east wall. Survive both halves and you earn the right to reproduce. ☢",
   },
   12: {
     title: "At Wall (End)",

@@ -32,7 +32,7 @@ const ACTION_NAMES = [
   'MV_X', 'MV_Y', 'MV_FWD', 'MV_RL', 'MV_RND',
   'SET_OSC', 'SET_PRB', 'SET_RSP', 'EMIT',
   'MV_E', 'MV_W', 'MV_N', 'MV_S',
-  'MV_L', 'MV_R', 'MV_REV',
+  'MV_L', 'MV_R', 'MV_REV', 'KILL',
 ];
 
 export function computeGenomeProfile(

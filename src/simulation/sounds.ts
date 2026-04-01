@@ -8,9 +8,9 @@ let audioCtx: AudioContext | null = null;
 let soundEnabled: boolean = (() => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === null ? true : stored === 'true';
+    return stored === null ? false : stored === 'true';
   } catch {
-    return true;
+    return false;
   }
 })();
 

@@ -7,7 +7,8 @@ export type OverlayShape =
   | { type: 'circle'; cx: number; cy: number; radius: number }
   | { type: 'rect'; x: number; y: number; w: number; h: number }
   | { type: 'border'; thickness: number }
-  | { type: 'radioactive'; step: number; maxSteps: number };
+  | { type: 'radioactive'; step: number; maxSteps: number }
+  | { type: 'radioactive-wall'; activeWall: 'west' | 'east'; dangerWidth: number };
 
 export function getChallengeOverlay(
   challenge: number,
@@ -89,12 +90,15 @@ export function getChallengeOverlay(
         h: sizeY,
       }];
 
-    case Challenge.CHALLENGE_RADIOACTIVE_WALLS:
+    case Challenge.CHALLENGE_RADIOACTIVE_WALLS: {
+      const step = simStep ?? 0;
+      const maxSteps = stepsPerGeneration ?? 300;
       return [{
-        type: 'radioactive',
-        step: simStep ?? 0,
-        maxSteps: stepsPerGeneration ?? 300,
+        type: 'radioactive-wall',
+        activeWall: step < maxSteps / 2 ? 'west' : 'east',
+        dangerWidth: Math.floor(sizeX / 2),
       }];
+    }
 
     case Challenge.CHALLENGE_AGAINST_ANY_WALL:
     case Challenge.CHALLENGE_TOUCH_ANY_WALL:

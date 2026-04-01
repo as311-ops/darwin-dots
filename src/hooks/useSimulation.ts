@@ -55,10 +55,15 @@ export function useSimulation(initialConfig: SimConfig, seedGenome?: Genome | nu
           setState(msg.state);
           break;
         case "generation": {
-          // Store history without genomeProfile to save memory
+          // Store history without genomeProfile to save memory, but retain brain-size scalars
           const { genomeProfile: gp, ...statsWithoutProfile } = msg.stats;
           setHistory((prev) => {
-            const next = [...prev, { ...statsWithoutProfile, genomeProfile: null }];
+            const next = [...prev, {
+              ...statsWithoutProfile,
+              genomeProfile: null,
+              avgNeuronCount: gp?.avgNeuronCount ?? 0,
+              avgGenomeLength: gp?.avgGenomeLength ?? 0,
+            }];
             // Keep max 500 entries to prevent memory growth
             return next.length > 500 ? next.slice(-500) : next;
           });

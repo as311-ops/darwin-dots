@@ -433,8 +433,8 @@ export enum Action {
   MOVE_LEFT,
   MOVE_RIGHT,
   MOVE_REVERSE,
-  NUM_ACTIONS,
   KILL_FORWARD,
+  NUM_ACTIONS,
 }
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import { getSensor } from './sensors';
 import { executeActions } from './actions';
 import { initializeGeneration0, spawnNewGeneration, type GenerationResult } from './spawn';
 import { nameFromGenome, clanFromGenome } from './naming';
+import { randomFloat } from './random';
 
 // Reusable Coord to avoid GC pressure in hot paths
 const _tmpCoord = new Coord(0, 0);
@@ -41,7 +42,7 @@ const ACTION_NAMES = [
   'MOVE_X', 'MOVE_Y', 'MOVE_FWD', 'MOVE_RL', 'MOVE_RND',
   'SET_OSC', 'SET_PROBE', 'SET_RESP', 'EMIT_SIG',
   'MOVE_E', 'MOVE_W', 'MOVE_N', 'MOVE_S',
-  'MOVE_L', 'MOVE_R', 'MOVE_REV',
+  'MOVE_L', 'MOVE_R', 'MOVE_REV', 'KILL',
 ];
 
 // ---------------------------------------------------------------------------
@@ -57,6 +58,7 @@ export interface SimState {
   agentColors: Uint8Array;
   barrierLocations: Uint16Array;
   signalLayers: Float32Array[];
+  killEvents: Float32Array;
   gridSize: { x: number; y: number };
 }
 
@@ -78,6 +80,7 @@ export class Simulator {
   private _cachedColors: Uint8Array | null = null;
   private _colorsGeneration = -1;
   private _stateCounter = 0;
+  private _pendingKillEvents: number[] = [];
 
   constructor(params?: Partial<SimParams>) {
     this.params = { ...DEFAULT_PARAMS, ...params };
@@ -231,6 +234,9 @@ export class Simulator {
       }
     }
 
+    const killEvents = new Float32Array(this._pendingKillEvents);
+    this._pendingKillEvents = [];
+
     return {
       generation: this.generation,
       simStep: this.simStep,
@@ -240,6 +246,7 @@ export class Simulator {
       agentColors,
       barrierLocations,
       signalLayers,
+      killEvents,
       gridSize: { x: this.params.sizeX, y: this.params.sizeY },
     };
   }
@@ -320,7 +327,8 @@ export class Simulator {
       { numActions: Action.NUM_ACTIONS },
     );
 
-    executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params);
+    executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params,
+      (x, y) => { this._pendingKillEvents.push(x, y); });
   }
 
   private getCachedSensorValue(
@@ -350,20 +358,25 @@ export class Simulator {
 
     // Challenge-specific step logic
     if (challenge === Challenge.CHALLENGE_RADIOACTIVE_WALLS) {
-      // Kill agents near walls. Zone grows from edges toward center.
-      // Scaled so a small safe zone (~8x8) remains at the end of the generation.
-      const maxZone = Math.floor(this.params.sizeX / 2) - 4;
-      const wallZone = Math.floor((this.simStep / this.params.stepsPerGeneration) * maxZone);
+      // Original biosim4 logic: one wall alternates each half-generation.
+      // First half → west wall (x=0) is radioactive.
+      // Second half → east wall (x=sizeX-1) is radioactive.
+      // chanceOfDeath = 1 / distanceFromActiveWall (only within sizeX/2 cells of wall).
+      const halfSteps = this.params.stepsPerGeneration / 2;
+      const dangerHalfWidth = Math.floor(this.params.sizeX / 2);
+      const useWest = this.simStep < halfSteps;
+
       for (let i = 1; i <= this.peeps.population; i++) {
         const indiv = this.peeps.getIndiv(i);
         if (!indiv.alive) continue;
-        if (
-          indiv.loc.x < wallZone ||
-          indiv.loc.x >= this.params.sizeX - wallZone ||
-          indiv.loc.y < wallZone ||
-          indiv.loc.y >= this.params.sizeY - wallZone
-        ) {
-          this.peeps.queueForDeath(i);
+        const distFromWall = useWest
+          ? indiv.loc.x + 1
+          : this.params.sizeX - indiv.loc.x;
+        if (distFromWall <= dangerHalfWidth) {
+          const chanceOfDeath = 1.0 / distFromWall;
+          if (randomFloat() < chanceOfDeath) {
+            this.peeps.queueForDeath(i);
+          }
         }
       }
     }

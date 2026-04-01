@@ -36,6 +36,7 @@ export function executeActions(
   peeps: Peeps,
   signals: Signals,
   params: SimParams,
+  onKill?: (x: number, y: number) => void,
 ): void {
   const isEnabled = (action: Action): boolean => action < Action.NUM_ACTIONS;
 
@@ -89,6 +90,7 @@ export function executeActions(
       if (grid.isInBounds(otherLoc) && grid.isOccupiedAt(otherLoc)) {
         const indiv2 = peeps.getIndivAt(otherLoc, grid);
         peeps.queueForDeath(indiv2.index);
+        onKill?.(otherLoc.x, otherLoc.y);
       }
     }
   }
