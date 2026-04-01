@@ -89,7 +89,9 @@ export default function SplashScreen({ onStart }: SplashScreenProps) {
           </p>
 
           <div className="grid grid-cols-2 gap-2 mb-6">
-            {PRESETS.map((preset, i) => (
+            {PRESETS.map((preset, i) => {
+              const isKill = preset.config.killEnable;
+              return (
               <button
                 key={preset.name}
                 onClick={() => onStart({ ...DEFAULT_CONFIG, ...preset.config })}
@@ -97,12 +99,16 @@ export default function SplashScreen({ onStart }: SplashScreenProps) {
                 onMouseLeave={() => setHoveredPreset(null)}
                 className={`text-left rounded-lg px-3 py-3 transition-all duration-200 border ${
                   hoveredPreset === i
-                    ? "bg-emerald-950/50 border-emerald-800/60 shadow-lg shadow-emerald-900/20"
+                    ? isKill
+                      ? "bg-red-950/50 border-red-800/60 shadow-lg shadow-red-900/20"
+                      : "bg-emerald-950/50 border-emerald-800/60 shadow-lg shadow-emerald-900/20"
                     : "bg-zinc-900/60 border-zinc-800/60 hover:border-zinc-700"
                 }`}
               >
                 <div className={`text-sm font-semibold transition-colors ${
-                  hoveredPreset === i ? "text-emerald-300" : "text-zinc-200"
+                  hoveredPreset === i
+                    ? isKill ? "text-red-300" : "text-emerald-300"
+                    : "text-zinc-200"
                 }`}>
                   {preset.name}
                 </div>
@@ -110,7 +116,8 @@ export default function SplashScreen({ onStart }: SplashScreenProps) {
                   {preset.description}
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           {/* Custom start */}
