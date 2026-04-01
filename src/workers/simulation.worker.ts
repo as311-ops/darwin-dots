@@ -91,6 +91,7 @@ function sendState(): void {
     state.agentLocations.buffer,
     state.agentColors.buffer,
     state.barrierLocations.buffer,
+    state.killEvents.buffer,
     ...state.signalLayers.map(l => l.buffer),
   ]);
 }

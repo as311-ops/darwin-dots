@@ -11,6 +11,7 @@ export interface SimState {
   agentColors: Uint8Array;
   barrierLocations: Uint16Array;
   signalLayers: Float32Array[];
+  killEvents: Float32Array;
   gridSize: { x: number; y: number };
 }
 
@@ -40,6 +41,8 @@ export default function SimCanvas({
   const [pulse, setPulse] = useState(false);
   const [flashIcon, setFlashIcon] = useState<'play' | 'pause' | null>(null);
   const spawnStartRef = useRef<number>(0);
+  const killParticlesRef = useRef<{ x: number; y: number; birthTime: number }[]>([]);
+  const KILL_FADE_MS = 1400;
 
   // Detect generation change
   useEffect(() => {
@@ -54,6 +57,15 @@ export default function SimCanvas({
       }
     }
   }, [state?.generation]);
+
+  // Absorb incoming kill events from simulation state
+  useEffect(() => {
+    if (!state?.killEvents?.length) return;
+    const now = performance.now();
+    for (let i = 0; i < state.killEvents.length; i += 2) {
+      killParticlesRef.current.push({ x: state.killEvents[i], y: state.killEvents[i + 1], birthTime: now });
+    }
+  }, [state?.killEvents]);
 
   const draw = useCallback(
     (ctx: CanvasRenderingContext2D) => {
@@ -154,6 +166,24 @@ export default function SimCanvas({
         );
         ctx.fill();
       }
+
+      // Kill events — skull emoji fades out over ~1.4s
+      const now = performance.now();
+      const skullSize = Math.max(cellW * 2.2, 14);
+      ctx.font = `${skullSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const alive: typeof killParticlesRef.current = [];
+      for (const p of killParticlesRef.current) {
+        const age = now - p.birthTime;
+        if (age >= KILL_FADE_MS) continue;
+        alive.push(p);
+        const t = age / KILL_FADE_MS;
+        ctx.globalAlpha = (1 - t) * 0.9;
+        ctx.fillText('💀', p.x * cellW + cellW / 2, p.y * cellH + cellH / 2);
+      }
+      ctx.globalAlpha = 1;
+      killParticlesRef.current = alive;
 
       // Compass labels (drawn last, on top of everything)
       ctx.font = "bold 10px ui-sans-serif, system-ui, sans-serif";

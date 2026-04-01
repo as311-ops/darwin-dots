@@ -57,6 +57,7 @@ export interface SimState {
   agentColors: Uint8Array;
   barrierLocations: Uint16Array;
   signalLayers: Float32Array[];
+  killEvents: Float32Array;
   gridSize: { x: number; y: number };
 }
 
@@ -78,6 +79,7 @@ export class Simulator {
   private _cachedColors: Uint8Array | null = null;
   private _colorsGeneration = -1;
   private _stateCounter = 0;
+  private _pendingKillEvents: number[] = [];
 
   constructor(params?: Partial<SimParams>) {
     this.params = { ...DEFAULT_PARAMS, ...params };
@@ -231,6 +233,9 @@ export class Simulator {
       }
     }
 
+    const killEvents = new Float32Array(this._pendingKillEvents);
+    this._pendingKillEvents = [];
+
     return {
       generation: this.generation,
       simStep: this.simStep,
@@ -240,6 +245,7 @@ export class Simulator {
       agentColors,
       barrierLocations,
       signalLayers,
+      killEvents,
       gridSize: { x: this.params.sizeX, y: this.params.sizeY },
     };
   }
@@ -320,7 +326,8 @@ export class Simulator {
       { numActions: Action.NUM_ACTIONS },
     );
 
-    executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params);
+    executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params,
+      (x, y) => { this._pendingKillEvents.push(x, y); });
   }
 
   private getCachedSensorValue(
