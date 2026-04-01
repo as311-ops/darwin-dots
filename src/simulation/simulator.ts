@@ -41,7 +41,7 @@ const ACTION_NAMES = [
   'MOVE_X', 'MOVE_Y', 'MOVE_FWD', 'MOVE_RL', 'MOVE_RND',
   'SET_OSC', 'SET_PROBE', 'SET_RESP', 'EMIT_SIG',
   'MOVE_E', 'MOVE_W', 'MOVE_N', 'MOVE_S',
-  'MOVE_L', 'MOVE_R', 'MOVE_REV',
+  'MOVE_L', 'MOVE_R', 'MOVE_REV', 'KILL',
 ];
 
 // ---------------------------------------------------------------------------

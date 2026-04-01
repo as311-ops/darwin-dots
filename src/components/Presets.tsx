@@ -94,16 +94,17 @@ export const PRESETS: Preset[] = [
     },
   },
   {
-    name: "Mutants",
-    description: "Extreme mutation rate. Chaotic, but surprisingly fast adaptation.",
+    name: "Kill Bill",
+    description: "Reach the center circle — and eliminate your rivals. Kill or be killed.",
     config: {
-      challenge: 1, // Right Half
-      population: 3000,
-      stepsPerGeneration: 200,
-      maxGenerations: 200,
-      genomeInitialLength: 24,
-      maxNumberNeurons: 5,
-      pointMutationRate: 0.05,
+      challenge: 5, // Center (Unweighted)
+      population: 1000,
+      stepsPerGeneration: 300,
+      maxGenerations: 500,
+      genomeInitialLength: 32,
+      maxNumberNeurons: 8,
+      pointMutationRate: 0.001,
+      killEnable: true,
       barrierType: 0,
     },
   },
