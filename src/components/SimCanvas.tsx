@@ -43,6 +43,7 @@ export default function SimCanvas({
   const spawnStartRef = useRef<number>(0);
   const killParticlesRef = useRef<{ x: number; y: number; birthTime: number }[]>([]);
   const KILL_FADE_MS = 1400;
+  const [recording, setRecording] = useState(false);
 
   // Detect generation change
   useEffect(() => {
@@ -231,6 +232,40 @@ export default function SimCanvas({
     return () => clearTimeout(id);
   }, [onToggle, running]);
 
+  const handleScreenshot = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `darwin-dots-gen${state?.generation ?? 0}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }, [state?.generation]);
+
+  const handleRecord = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || recording) return;
+    const stream = (canvas as HTMLCanvasElement & { captureStream(fps?: number): MediaStream }).captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `darwin-dots-gen${state?.generation ?? 0}.webm`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      setRecording(false);
+    };
+    setRecording(true);
+    recorder.start();
+    setTimeout(() => recorder.stop(), 3000);
+  }, [recording, state?.generation]);
+
   return (
     <div
       className="rounded-lg transition-shadow duration-500 ease-out relative"
@@ -246,6 +281,41 @@ export default function SimCanvas({
         style={{ width, height }}
         onClick={handleClick}
       />
+      {/* Screenshot / Record buttons */}
+      <div className="absolute bottom-2 right-2 flex gap-1.5 pointer-events-auto">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleScreenshot(); }}
+          title="Screenshot (PNG)"
+          className="bg-black/50 hover:bg-black/80 text-zinc-400 hover:text-white rounded p-1.5 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleRecord(); }}
+          title={recording ? 'Aufnahme läuft… (3s)' : 'Video aufnehmen (3s WebM)'}
+          disabled={recording}
+          className={`rounded p-1.5 transition-colors ${
+            recording
+              ? 'bg-red-600/80 text-white cursor-not-allowed'
+              : 'bg-black/50 hover:bg-black/80 text-zinc-400 hover:text-red-400'
+          }`}
+        >
+          {recording ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="6"/>
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2"/>
+            </svg>
+          )}
+        </button>
+      </div>
+
       {flashIcon && (
         <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-lg"
