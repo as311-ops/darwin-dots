@@ -54,29 +54,47 @@ function getShortProbeBarrierDistance(
   probeDistance: number,
   grid: Grid,
 ): number {
+  const nc = dir.asNormalizedCoord();
+  const dx = nc.x;
+  const dy = nc.y;
   let countFwd = 0;
   let countRev = 0;
+  const probe = new Coord(0, 0);
 
-  let loc = loc0.add(dir);
+  let cx = loc0.x + dx;
+  let cy = loc0.y + dy;
   let numLocsToTest = probeDistance;
-  while (numLocsToTest > 0 && grid.isInBounds(loc) && !grid.isBarrierAt(loc)) {
+  while (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe) || grid.isBarrierAt(probe)) break;
     countFwd++;
-    loc = loc.add(dir);
+    cx += dx;
+    cy += dy;
     numLocsToTest--;
   }
-  if (numLocsToTest > 0 && !grid.isInBounds(loc)) {
-    countFwd = probeDistance;
+  if (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe)) countFwd = probeDistance;
   }
 
   numLocsToTest = probeDistance;
-  loc = loc0.subtract(dir);
-  while (numLocsToTest > 0 && grid.isInBounds(loc) && !grid.isBarrierAt(loc)) {
+  cx = loc0.x - dx;
+  cy = loc0.y - dy;
+  while (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe) || grid.isBarrierAt(probe)) break;
     countRev++;
-    loc = loc.subtract(dir);
+    cx -= dx;
+    cy -= dy;
     numLocsToTest--;
   }
-  if (numLocsToTest > 0 && !grid.isInBounds(loc)) {
-    countRev = probeDistance;
+  if (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe)) countRev = probeDistance;
   }
 
   let sensorVal = (countFwd - countRev) + probeDistance;
@@ -152,18 +170,31 @@ function longProbePopulationFwd(
   longProbeDist: number,
   grid: Grid,
 ): number {
+  const nc = dir.asNormalizedCoord();
+  const dx = nc.x;
+  const dy = nc.y;
   let count = 0;
-  let current = loc.add(dir);
+  let cx = loc.x + dx;
+  let cy = loc.y + dy;
   let numLocsToTest = longProbeDist;
+  const probe = new Coord(cx, cy);
 
-  while (numLocsToTest > 0 && grid.isInBounds(current) && grid.isEmptyAt(current)) {
+  while (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe) || !grid.isEmptyAt(probe)) break;
     count++;
-    current = current.add(dir);
+    cx += dx;
+    cy += dy;
     numLocsToTest--;
   }
 
-  if (numLocsToTest > 0 && (!grid.isInBounds(current) || grid.isBarrierAt(current))) {
-    return longProbeDist;
+  if (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe) || grid.isBarrierAt(probe)) {
+      return longProbeDist;
+    }
   }
   return count;
 }
@@ -178,18 +209,31 @@ function longProbeBarrierFwd(
   longProbeDist: number,
   grid: Grid,
 ): number {
+  const nc = dir.asNormalizedCoord();
+  const dx = nc.x;
+  const dy = nc.y;
   let count = 0;
-  let current = loc.add(dir);
+  let cx = loc.x + dx;
+  let cy = loc.y + dy;
   let numLocsToTest = longProbeDist;
+  const probe = new Coord(cx, cy);
 
-  while (numLocsToTest > 0 && grid.isInBounds(current) && !grid.isBarrierAt(current)) {
+  while (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe) || grid.isBarrierAt(probe)) break;
     count++;
-    current = current.add(dir);
+    cx += dx;
+    cy += dy;
     numLocsToTest--;
   }
 
-  if (numLocsToTest > 0 && !grid.isInBounds(current)) {
-    return longProbeDist;
+  if (numLocsToTest > 0) {
+    probe.x = cx;
+    probe.y = cy;
+    if (!grid.isInBounds(probe)) {
+      return longProbeDist;
+    }
   }
   return count;
 }

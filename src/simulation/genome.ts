@@ -429,7 +429,11 @@ export function hammingDistanceBytes(genome1: Genome, genome2: Genome): number {
 
 /**
  * Genome similarity, 0.0..1.0.
- * @param method 0 = Jaro-Winkler, 1 = Hamming bits, 2 = Hamming bytes
+ * @param method 0 = fast Hamming bits (first 8 genes), 1 = Hamming bits (full), 2 = Hamming bytes, 3 = Jaro-Winkler
+ *
+ * Default (method=0) uses a fast approximation: Hamming bit distance over the first
+ * min(8, length) genes, with no heap allocations. This replaces the previous default
+ * of jaroWinklerDistance which allocated two Arrays per call and did O(400) comparisons.
  */
 export function genomeSimilarity(
   g1: Genome,
@@ -437,12 +441,29 @@ export function genomeSimilarity(
   method: number = 0,
 ): number {
   switch (method) {
-    case 0:
-      return jaroWinklerDistance(g1, g2);
+    case 0: {
+      // Fast approximation: Hamming bit distance over first min(8, length) genes.
+      // No array allocations. O(8) gene comparisons with inline popcount.
+      const n = Math.min(8, g1.length, g2.length);
+      if (n === 0) return 0.0;
+      let bitCount = 0;
+      for (let i = 0; i < n; i++) {
+        const a = g1[i];
+        const b = g2[i];
+        const upperA = ((a.sourceType & 1) << 15) | ((a.sourceNum & 0x7f) << 8) | ((a.sinkType & 1) << 7) | (a.sinkNum & 0x7f);
+        const upperB = ((b.sourceType & 1) << 15) | ((b.sourceNum & 0x7f) << 8) | ((b.sinkType & 1) << 7) | (b.sinkNum & 0x7f);
+        let xor = (((upperA << 16) | (a.weight & 0xffff)) ^ ((upperB << 16) | (b.weight & 0xffff))) >>> 0;
+        while (xor !== 0) { bitCount++; xor &= xor - 1; }
+      }
+      // Scale: ~50% bits differ for random genomes, so 2x maps to 0..1
+      return 1.0 - Math.min(1.0, (2.0 * bitCount) / (n * 32));
+    }
     case 1:
       return hammingDistanceBits(g1, g2);
     case 2:
       return hammingDistanceBytes(g1, g2);
+    case 3:
+      return jaroWinklerDistance(g1, g2);
     default:
       throw new Error(`Unknown genome comparison method: ${method}`);
   }

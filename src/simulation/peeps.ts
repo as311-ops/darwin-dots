@@ -40,8 +40,8 @@ export class Peeps {
       this.individuals[i] = indiv;
     }
 
-    this.deathQueue = [];
-    this.moveQueue = [];
+    this.deathQueue.length = 0;
+    this.moveQueue.length = 0;
   }
 
   /**
@@ -85,7 +85,7 @@ export class Peeps {
         indiv.alive = false;
       }
     }
-    this.deathQueue = [];
+    this.deathQueue.length = 0;
   }
 
   get deathQueueSize(): number {
@@ -120,6 +120,6 @@ export class Peeps {
         }
       }
     }
-    this.moveQueue = [];
+    this.moveQueue.length = 0;
   }
 }

@@ -6,7 +6,20 @@ import { Grid } from './grid';
 import { Peeps } from './peeps';
 import { Signals } from './signals';
 import { SimParams } from './params';
-import { randomFloat } from './random';
+import { randomFloat, randomUint } from './random';
+
+// 8-direction normalized coords as flat integer pairs [x0,y0, x1,y1, ...] — compass order SW,S,SE,W,E,NW,N,NE
+// Avoids Dir.random8().asNormalizedCoord() (2 allocations) in MOVE_RANDOM hot path
+const RANDOM8_XY = new Int8Array([
+  -1,-1, // SW=0
+   0,-1, // S=1
+   1,-1, // SE=2
+  -1, 0, // W=3
+   1, 0, // E=5 (skip CENTER=4)
+  -1, 1, // NW=6
+   0, 1, // N=7
+   1, 1, // NE=8
+]);
 
 // ---------------------------------------------------------------------------
 // prob2bool -- convert probability to boolean
@@ -38,10 +51,10 @@ export function executeActions(
   params: SimParams,
   onKill?: (x: number, y: number) => void,
 ): void {
-  const isEnabled = (action: Action): boolean => action < Action.NUM_ACTIONS;
+  // isEnabled was always true (all Action values < NUM_ACTIONS) — removed closure
 
   // --- SET_RESPONSIVENESS ---
-  if (isEnabled(Action.SET_RESPONSIVENESS)) {
+  {
     const level = actionLevels[Action.SET_RESPONSIVENESS];
     indiv.responsiveness = (Math.tanh(level) + 1.0) / 2.0;
   }
@@ -52,7 +65,7 @@ export function executeActions(
   );
 
   // --- SET_OSCILLATOR_PERIOD ---
-  if (isEnabled(Action.SET_OSCILLATOR_PERIOD)) {
+  {
     const periodf = actionLevels[Action.SET_OSCILLATOR_PERIOD];
     const newPeriodf01 = (Math.tanh(periodf) + 1.0) / 2.0;
     const newPeriod = 1 + Math.floor(1.5 + Math.exp(7.0 * newPeriodf01));
@@ -60,7 +73,7 @@ export function executeActions(
   }
 
   // --- SET_LONGPROBE_DIST ---
-  if (isEnabled(Action.SET_LONGPROBE_DIST)) {
+  {
     const maxLongProbeDistance = 32;
     let level = actionLevels[Action.SET_LONGPROBE_DIST];
     level = (Math.tanh(level) + 1.0) / 2.0;
@@ -69,7 +82,7 @@ export function executeActions(
   }
 
   // --- EMIT_SIGNAL0 ---
-  if (isEnabled(Action.EMIT_SIGNAL0)) {
+  {
     const emitThreshold = 0.5;
     let level = actionLevels[Action.EMIT_SIGNAL0];
     level = (Math.tanh(level) + 1.0) / 2.0;
@@ -79,71 +92,78 @@ export function executeActions(
     }
   }
 
+  // Precompute lastMoveDir normalized coord as integers once — eliminates per-call Coord allocations
+  const lastMoveNc = indiv.lastMoveDir.asNormalizedCoord();
+  const lmdx = lastMoveNc.x;
+  const lmdy = lastMoveNc.y;
+  // rotate90DegCW:  (lmdy, -lmdx) — no Dir/Coord allocation needed
+  // rotate90DegCCW: (-lmdy, lmdx) — no Dir/Coord allocation needed
+
   // --- KILL_FORWARD ---
-  if (isEnabled(Action.KILL_FORWARD) && params.killEnable) {
+  if (params.killEnable) {
     const killThreshold = 0.5;
     let level = actionLevels[Action.KILL_FORWARD];
     level = (Math.tanh(level) + 1.0) / 2.0;
     level *= responsivenessAdjusted;
     if (level > killThreshold && prob2bool(level)) {
-      const otherLoc = indiv.loc.add(indiv.lastMoveDir);
+      const ox = indiv.loc.x + lmdx;
+      const oy = indiv.loc.y + lmdy;
+      const otherLoc = new Coord(ox, oy);
       if (grid.isInBounds(otherLoc) && grid.isOccupiedAt(otherLoc)) {
         const indiv2 = peeps.getIndivAt(otherLoc, grid);
         peeps.queueForDeath(indiv2.index);
-        onKill?.(otherLoc.x, otherLoc.y);
+        onKill?.(ox, oy);
       }
     }
   }
 
   // ------------- Movement action neurons ---------------
-  const lastMoveOffset = indiv.lastMoveDir.asNormalizedCoord();
+  let moveX = actionLevels[Action.MOVE_X];
+  let moveY = actionLevels[Action.MOVE_Y];
 
-  let moveX = isEnabled(Action.MOVE_X) ? actionLevels[Action.MOVE_X] : 0.0;
-  let moveY = isEnabled(Action.MOVE_Y) ? actionLevels[Action.MOVE_Y] : 0.0;
+  moveX += actionLevels[Action.MOVE_EAST];
+  moveX -= actionLevels[Action.MOVE_WEST];
+  moveY += actionLevels[Action.MOVE_NORTH];
+  moveY -= actionLevels[Action.MOVE_SOUTH];
 
-  if (isEnabled(Action.MOVE_EAST)) moveX += actionLevels[Action.MOVE_EAST];
-  if (isEnabled(Action.MOVE_WEST)) moveX -= actionLevels[Action.MOVE_WEST];
-  if (isEnabled(Action.MOVE_NORTH)) moveY += actionLevels[Action.MOVE_NORTH];
-  if (isEnabled(Action.MOVE_SOUTH)) moveY -= actionLevels[Action.MOVE_SOUTH];
-
-  if (isEnabled(Action.MOVE_FORWARD)) {
+  {
     const level = actionLevels[Action.MOVE_FORWARD];
-    moveX += lastMoveOffset.x * level;
-    moveY += lastMoveOffset.y * level;
+    moveX += lmdx * level;
+    moveY += lmdy * level;
   }
 
-  if (isEnabled(Action.MOVE_REVERSE)) {
+  {
     const level = actionLevels[Action.MOVE_REVERSE];
-    moveX -= lastMoveOffset.x * level;
-    moveY -= lastMoveOffset.y * level;
+    moveX -= lmdx * level;
+    moveY -= lmdy * level;
   }
 
-  if (isEnabled(Action.MOVE_LEFT)) {
+  {
     const level = actionLevels[Action.MOVE_LEFT];
-    const offset = indiv.lastMoveDir.rotate90DegCCW().asNormalizedCoord();
-    moveX += offset.x * level;
-    moveY += offset.y * level;
+    // rotate90DegCCW: (-y, x) applied to (lmdx, lmdy) → (-lmdy, lmdx)
+    moveX += (-lmdy) * level;
+    moveY += lmdx * level;
   }
 
-  if (isEnabled(Action.MOVE_RIGHT)) {
+  {
     const level = actionLevels[Action.MOVE_RIGHT];
-    const offset = indiv.lastMoveDir.rotate90DegCW().asNormalizedCoord();
-    moveX += offset.x * level;
-    moveY += offset.y * level;
+    // rotate90DegCW: (y, -x) applied to (lmdx, lmdy) → (lmdy, -lmdx)
+    moveX += lmdy * level;
+    moveY += (-lmdx) * level;
   }
 
-  if (isEnabled(Action.MOVE_RL)) {
+  {
     const level = actionLevels[Action.MOVE_RL];
-    const offset = indiv.lastMoveDir.rotate90DegCW().asNormalizedCoord();
-    moveX += offset.x * level;
-    moveY += offset.y * level;
+    // rotate90DegCW: (y, -x) applied to (lmdx, lmdy) → (lmdy, -lmdx)
+    moveX += lmdy * level;
+    moveY += (-lmdx) * level;
   }
 
-  if (isEnabled(Action.MOVE_RANDOM)) {
+  {
     const level = actionLevels[Action.MOVE_RANDOM];
-    const offset = Dir.random8().asNormalizedCoord();
-    moveX += offset.x * level;
-    moveY += offset.y * level;
+    const rndIdx = randomUint(0, 7) * 2;
+    moveX += RANDOM8_XY[rndIdx] * level;
+    moveY += RANDOM8_XY[rndIdx + 1] * level;
   }
 
   // Convert accumulated sums to -1.0..1.0 and scale by responsiveness
@@ -156,8 +176,10 @@ export function executeActions(
   const signumX = moveX < 0.0 ? -1 : 1;
   const signumY = moveY < 0.0 ? -1 : 1;
 
-  const movementOffset = new Coord(probX * signumX, probY * signumY);
-  const newLoc = indiv.loc.add(movementOffset);
+  // Inline newLoc as integer arithmetic — no intermediate Coord object
+  const newLocX = indiv.loc.x + probX * signumX;
+  const newLocY = indiv.loc.y + probY * signumY;
+  const newLoc = new Coord(newLocX, newLocY);
 
   if (grid.isInBounds(newLoc) && grid.isEmptyAt(newLoc)) {
     peeps.queueForMove(indiv.index, newLoc);

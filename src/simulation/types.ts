@@ -40,6 +40,15 @@ export enum Compass {
   NW = 6, N = 7, NE = 8,
 }
 
+// Pre-computed conversion table for Coord.asDir() — module-level to avoid
+// per-call allocation (called once per queued move in drainMoveQueue).
+const asDirConversion: Compass[] = [
+  Compass.S, Compass.CENTER, Compass.SW, Compass.N,
+  Compass.SE, Compass.E, Compass.N, Compass.N,
+  Compass.N, Compass.N, Compass.W, Compass.NW,
+  Compass.N, Compass.NE, Compass.N, Compass.N,
+];
+
 // Pre-computed rotation table: rotations[dir * 8 + (n & 7)]
 // Each row is for one compass value, columns are rotation steps 0..7
 const rotations: Compass[] = [
@@ -171,13 +180,6 @@ export class Coord {
     const tanN = 13860;
     const tanD = 33461;
 
-    const conversion: Compass[] = [
-      Compass.S, Compass.CENTER, Compass.SW, Compass.N,
-      Compass.SE, Compass.E, Compass.N, Compass.N,
-      Compass.N, Compass.N, Compass.W, Compass.NW,
-      Compass.N, Compass.NE, Compass.N, Compass.N,
-    ];
-
     const xp = this.x * tanD + this.y * tanN;
     const yp = this.y * tanD - this.x * tanN;
 
@@ -187,7 +189,7 @@ export class Coord {
       (yp > xp ? 2 : 0) +
       (yp >= -xp ? 1 : 0);
 
-    return new Dir(conversion[idx]);
+    return new Dir(asDirConversion[idx]);
   }
 
   asPolar(): Polar {

@@ -82,11 +82,21 @@ export class Simulator {
   private _stateCounter = 0;
   private _pendingKillEvents: number[] = [];
 
+  // Pre-allocated callbacks — avoid creating new closures per agent per step
+  private _currentIndiv: Indiv | null = null;
+  private _currentCacheToken = 0;
+  private readonly _killEventCallback: (x: number, y: number) => void;
+  private readonly _getSensorFunc: (sensor: number, simStep: number) => number;
+
   constructor(params?: Partial<SimParams>) {
     this.params = { ...DEFAULT_PARAMS, ...params };
     this.grid = new Grid();
     this.peeps = new Peeps();
     this.signals = new Signals();
+    // Bind once — reused across all agents and steps
+    this._killEventCallback = (x: number, y: number) => { this._pendingKillEvents.push(x, y); };
+    this._getSensorFunc = (sensor: number, simStep: number) =>
+      this.getCachedSensorValue(this._currentIndiv!, sensor as Sensor, simStep, this._currentCacheToken);
   }
 
   /**
@@ -235,7 +245,7 @@ export class Simulator {
     }
 
     const killEvents = new Float32Array(this._pendingKillEvents);
-    this._pendingKillEvents = [];
+    this._pendingKillEvents.length = 0;
 
     return {
       generation: this.generation,
@@ -317,18 +327,19 @@ export class Simulator {
     }
     indiv.sensorCacheToken = sensorCacheToken;
 
-    const getSensorFunc = (sensor: number, simStep: number) =>
-      this.getCachedSensorValue(indiv, sensor as Sensor, simStep, sensorCacheToken);
+    // Set context for pre-allocated callbacks — no new closures
+    this._currentIndiv = indiv;
+    this._currentCacheToken = sensorCacheToken;
 
     const actionLevels = feedForward(
       indiv.nnet,
       this.simStep,
-      getSensorFunc,
+      this._getSensorFunc,
       { numActions: Action.NUM_ACTIONS },
     );
 
     executeActions(indiv, actionLevels, this.grid, this.peeps, this.signals, this.params,
-      (x, y) => { this._pendingKillEvents.push(x, y); });
+      this._killEventCallback);
   }
 
   private getCachedSensorValue(
