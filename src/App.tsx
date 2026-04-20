@@ -11,6 +11,7 @@ import ChallengeInfo from "./components/ChallengeInfo";
 import LineageTree from "./components/LineageTree";
 import SplashScreen from "./components/SplashScreen";
 import DarwinLogo from "./components/DarwinLogo";
+import { PRESETS } from "./components/Presets";
 import { useSimulation } from "./hooks/useSimulation";
 import type { PerfStats } from "./hooks/useSimulation";
 import {
@@ -31,18 +32,28 @@ const CHALLENGE_LABELS: Record<number, string> = {
   14: "East-West", 15: "Near Barrier", 16: "Pairs", 17: "Sequence", 18: "Altruism",
 };
 
-function useWindowWidth() {
-  const [w, setW] = useState(window.innerWidth);
+const IS_SCREENSAVER = new URLSearchParams(window.location.search).has("screensaver");
+const SCREENSAVER_CYCLE_GENS = 25;
+const SCREENSAVER_INITIAL_IDX = IS_SCREENSAVER ? Math.floor(Math.random() * PRESETS.length) : 0;
+
+function useWindowSize() {
+  const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   useEffect(() => {
-    const onResize = () => setW(window.innerWidth);
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  return w;
+  return size;
+}
+
+function useWindowWidth() {
+  return useWindowSize().w;
 }
 
 export default function App() {
-  const [config, setConfig] = useState<SimConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<SimConfig>(
+    IS_SCREENSAVER ? { ...DEFAULT_CONFIG, ...PRESETS[SCREENSAVER_INITIAL_IDX].config } : DEFAULT_CONFIG
+  );
   const [commentaryLines, setCommentaryLines] = useState<CommentaryLine[]>([]);
   const [summary, setSummary] = useState<MatchSummary | null>(null);
   const [summaryProfile, setSummaryProfile] = useState<import("./simulation/genome-profile").GenomeProfile | null>(null);
@@ -53,16 +64,22 @@ export default function App() {
     if (genome) clearGenomeHash();
     return genome;
   });
-  const [showSplash, setShowSplash] = useState(!seedGenome);
+  const [showSplash, setShowSplash] = useState(!seedGenome && !IS_SCREENSAVER);
   const wasRunning = useRef(false);
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
+  const screensaverPresetIdx = useRef(SCREENSAVER_INITIAL_IDX);
+
+  const screensaverInitConfig = IS_SCREENSAVER
+    ? { ...DEFAULT_CONFIG, ...PRESETS[screensaverPresetIdx.current].config }
+    : DEFAULT_CONFIG;
 
   const {
     state, running, history, genomeProfile, lineage, perfStats, speed,
     start, pause, reset, changeSpeed, updateConfig,
-  } = useSimulation(DEFAULT_CONFIG, seedGenome);
+  } = useSimulation(screensaverInitConfig, seedGenome);
 
   const windowWidth = useWindowWidth();
+  const windowSize = useWindowSize();
 
   // Champion genome from last lineage entry
   const championGenome: Genome | null =
@@ -74,6 +91,25 @@ export default function App() {
     navigator.clipboard.writeText(url);
     playShare();
   }, [championGenome]);
+
+  // Screensaver: auto-start + auto-cycle presets
+  useEffect(() => {
+    if (!IS_SCREENSAVER) return;
+    const id = setTimeout(() => start(), 200);
+    return () => clearTimeout(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!IS_SCREENSAVER || history.length === 0) return;
+    const gen = history[history.length - 1].generation;
+    if (gen > 0 && gen % SCREENSAVER_CYCLE_GENS === 0) {
+      screensaverPresetIdx.current = Math.floor(Math.random() * PRESETS.length);
+      const nextConfig = { ...DEFAULT_CONFIG, ...PRESETS[screensaverPresetIdx.current].config };
+      setConfig(nextConfig);
+      reset(nextConfig);
+      setTimeout(() => start(), 100);
+    }
+  }, [history.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Responsive breakpoints
   const isNarrow = windowWidth < 900;
@@ -246,6 +282,26 @@ export default function App() {
       )}
     </div>
   ) : null;
+
+  if (IS_SCREENSAVER) {
+    const presetName = PRESETS[screensaverPresetIdx.current]?.name ?? "";
+    return (
+      <div className="fixed inset-0 bg-zinc-950 overflow-hidden">
+        <SimCanvas
+          state={state}
+          width={windowSize.w}
+          height={windowSize.h}
+          challenge={config.challenge}
+          stepsPerGeneration={config.stepsPerGeneration}
+          running={running}
+        />
+        <div className="absolute bottom-4 right-5 text-right pointer-events-none select-none">
+          <div className="text-[10px] text-zinc-600 font-mono">Darwin's Arena</div>
+          <div className="text-[9px] text-zinc-700 font-mono">{presetName} · Gen {state?.generation ?? 0}</div>
+        </div>
+      </div>
+    );
+  }
 
   if (showSplash) {
     return <SplashScreen onStart={handleSplashStart} />;

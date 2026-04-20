@@ -44,6 +44,17 @@ export default function SimCanvas({
   const killParticlesRef = useRef<{ x: number; y: number; birthTime: number }[]>([]);
   const KILL_FADE_MS = 1400;
   const [recording, setRecording] = useState(false);
+  const [showChallengeIntro, setShowChallengeIntro] = useState(false);
+
+  useEffect(() => {
+    if (state?.generation === 0) setShowChallengeIntro(true);
+  }, [state?.generation]);
+
+  useEffect(() => {
+    if (!showChallengeIntro) return;
+    const id = setTimeout(() => setShowChallengeIntro(false), 3200);
+    return () => clearTimeout(id);
+  }, [showChallengeIntro]);
 
   // Detect generation change
   useEffect(() => {
@@ -335,6 +346,23 @@ export default function SimCanvas({
           </div>
         </div>
       )}
+
+      {showChallengeIntro && (() => {
+        const info = CHALLENGE_INFO[challenge];
+        if (!info) return null;
+        return (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none rounded-lg"
+            style={{ animation: 'challengeIntroFade 3.2s ease-out forwards' }}
+          >
+            <div className="bg-zinc-950/80 backdrop-blur-sm border border-zinc-700/50 rounded-xl px-6 py-4 max-w-[80%] text-center shadow-2xl">
+              <div className="text-[10px] text-emerald-500 font-mono uppercase tracking-widest mb-1">Challenge</div>
+              <div className="text-base font-bold text-zinc-100 mb-1">{info.title}</div>
+              <div className="text-xs text-zinc-400 leading-snug">{info.brief}</div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
