@@ -32,6 +32,19 @@
   100% { opacity: 0; transform: scale(1.2); }
 }
 
+@keyframes ssBannerIn {
+  0%   { opacity: 0; transform: translateY(12px); }
+  12%  { opacity: 1; transform: translateY(0); }
+  75%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes ssFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes challengeIntroFade {
   0%   { opacity: 0; transform: translateY(10px); }
   12%  { opacity: 1; transform: translateY(0); }

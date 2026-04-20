@@ -50,6 +50,24 @@ function useWindowWidth() {
   return useWindowSize().w;
 }
 
+function SparklineSVG({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const w = 180, h = 48, pad = 6;
+  const pts = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+    const y = h - pad - Math.max(0, Math.min(1, v)) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const [lx, ly] = pts[pts.length - 1].split(',');
+  return (
+    <svg width={w} height={h} className="mx-auto">
+      <polyline points={pts.join(' ')} fill="none" stroke="#10b981" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+      <circle cx={lx} cy={ly} r="2.5" fill="#10b981" opacity="0.9" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [config, setConfig] = useState<SimConfig>(
     IS_SCREENSAVER ? { ...DEFAULT_CONFIG, ...PRESETS[SCREENSAVER_INITIAL_IDX].config } : DEFAULT_CONFIG
@@ -68,6 +86,10 @@ export default function App() {
   const wasRunning = useRef(false);
   const prevProfileRef = useRef<import("./simulation/genome-profile").GenomeProfile | null>(null);
   const screensaverPresetIdx = useRef(SCREENSAVER_INITIAL_IDX);
+  type SsBanner = { survivors: number; population: number; streak: number; sparkData?: number[] };
+  const [ssBanner, setSsBanner] = useState<SsBanner | null>(null);
+  const [ssFlash, setSsFlash] = useState<'wipeout' | 'victory' | null>(null);
+  const ssStreakRef = useRef(0);
 
   const screensaverInitConfig = IS_SCREENSAVER
     ? { ...DEFAULT_CONFIG, ...PRESETS[screensaverPresetIdx.current].config }
@@ -109,6 +131,27 @@ export default function App() {
       reset(nextConfig);
       setTimeout(() => start(), 100);
     }
+  }, [history.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!IS_SCREENSAVER || history.length === 0) return;
+    const last = history[history.length - 1];
+    const rate = last.population > 0 ? last.survivors / last.population : 0;
+
+    if (last.survivors === 0) ssStreakRef.current = 0;
+    else ssStreakRef.current++;
+
+    setSsFlash(last.survivors === 0 ? 'wipeout' : rate > 0.75 ? 'victory' : null);
+
+    const sparkData = history.length >= 5 && history.length % 10 === 0
+      ? history.slice(-20).map(h => h.population > 0 ? h.survivors / h.population : 0)
+      : undefined;
+
+    setSsBanner({ survivors: last.survivors, population: last.population, streak: ssStreakRef.current, sparkData });
+
+    const flashId = setTimeout(() => setSsFlash(null), 1500);
+    const bannerId = setTimeout(() => setSsBanner(null), 3500);
+    return () => { clearTimeout(flashId); clearTimeout(bannerId); };
   }, [history.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Responsive breakpoints
@@ -295,9 +338,58 @@ export default function App() {
           stepsPerGeneration={config.stepsPerGeneration}
           running={running}
         />
-        <div className="absolute bottom-4 right-5 text-right pointer-events-none select-none">
-          <div className="text-[10px] text-zinc-600 font-mono">Darwin's Arena</div>
-          <div className="text-[9px] text-zinc-700 font-mono">{presetName} · Gen {state?.generation ?? 0}</div>
+        {/* Screen flash for wipeout / victory */}
+        {ssFlash && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundColor: ssFlash === 'wipeout' ? 'rgba(239,68,68,0.22)' : 'rgba(16,185,129,0.16)',
+              animation: 'ssFlash 1.5s ease-out forwards',
+            }}
+          />
+        )}
+
+        {/* Survivor banner + sparkline */}
+        {ssBanner && (
+          <div
+            className="absolute inset-x-0 bottom-20 flex justify-center pointer-events-none select-none"
+            style={{ animation: 'ssBannerIn 3.5s ease-out forwards' }}
+          >
+            <div className="bg-zinc-950/75 backdrop-blur-sm border border-zinc-800/50 rounded-xl px-8 py-4 text-center">
+              <div className={`text-2xl font-bold font-mono tabular-nums ${
+                ssBanner.survivors === 0 ? 'text-red-400' :
+                ssBanner.survivors / ssBanner.population > 0.75 ? 'text-emerald-400' : 'text-zinc-200'
+              }`}>
+                {ssBanner.survivors.toLocaleString()} / {ssBanner.population.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">survived</div>
+              {ssBanner.streak > 1 && (
+                <div className="text-[10px] text-zinc-600 font-mono mt-2">
+                  {ssBanner.streak} gens without wipeout
+                </div>
+              )}
+              {ssBanner.sparkData && (
+                <div className="mt-3">
+                  <SparklineSVG data={ssBanner.sparkData} />
+                  <div className="text-[9px] text-zinc-700 mt-1">last {ssBanner.sparkData.length} generations</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom bar */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-between items-end px-5 pointer-events-none select-none">
+          <div className="text-left">
+            <div className="text-[28px] font-mono font-bold text-zinc-700 leading-none tabular-nums">
+              {state ? Math.round(state.agentLocations.length / 2).toLocaleString() : "—"}
+            </div>
+            <div className="text-[9px] text-zinc-700 font-mono uppercase tracking-widest mt-0.5">active agents</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-zinc-600 font-mono">Darwin's Arena</div>
+            <div className="text-[9px] text-zinc-700 font-mono">{presetName} · Gen {state?.generation ?? 0}</div>
+          </div>
         </div>
       </div>
     );
