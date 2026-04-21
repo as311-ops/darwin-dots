@@ -47,7 +47,7 @@ let targetFps = 30;
 let stepsPerUpdate = 8;
 let animFrameId: ReturnType<typeof setTimeout> | null = null;
 
-const TARGET_SECS_PER_GEN = 4;
+const TARGET_SECS_PER_GEN = 7;
 
 function calcStepsPerUpdate(stepsPerGeneration: number): number {
   return Math.max(1, Math.round(stepsPerGeneration / TARGET_SECS_PER_GEN / targetFps));

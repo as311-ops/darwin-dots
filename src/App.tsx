@@ -33,7 +33,7 @@ const CHALLENGE_LABELS: Record<number, string> = {
 };
 
 const IS_SCREENSAVER = new URLSearchParams(window.location.search).has("screensaver");
-const SCREENSAVER_CYCLE_GENS = 25;
+const SCREENSAVER_CYCLE_GENS = 100;
 const SCREENSAVER_INITIAL_IDX = IS_SCREENSAVER ? Math.floor(Math.random() * PRESETS.length) : 0;
 
 function useWindowSize() {
@@ -52,7 +52,7 @@ function useWindowWidth() {
 
 function SparklineSVG({ data }: { data: number[] }) {
   if (data.length < 2) return null;
-  const w = 180, h = 48, pad = 6;
+  const w = 260, h = 48, pad = 6;
   const pts = data.map((v, i) => {
     const x = pad + (i / (data.length - 1)) * (w - pad * 2);
     const y = h - pad - Math.max(0, Math.min(1, v)) * (h - pad * 2);
@@ -60,7 +60,7 @@ function SparklineSVG({ data }: { data: number[] }) {
   });
   const [lx, ly] = pts[pts.length - 1].split(',');
   return (
-    <svg width={w} height={h} className="mx-auto">
+    <svg width={w} height={h} className="mx-auto" style={{ display: 'block' }}>
       <polyline points={pts.join(' ')} fill="none" stroke="#10b981" strokeWidth="1.5"
         strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
       <circle cx={lx} cy={ly} r="2.5" fill="#10b981" opacity="0.9" />
@@ -143,8 +143,8 @@ export default function App() {
 
     setSsFlash(last.survivors === 0 ? 'wipeout' : rate > 0.75 ? 'victory' : null);
 
-    const sparkData = history.length >= 5 && history.length % 10 === 0
-      ? history.slice(-20).map(h => h.population > 0 ? h.survivors / h.population : 0)
+    const sparkData = history.length >= 2
+      ? history.slice(-100).map(h => h.population > 0 ? h.survivors / h.population : 0)
       : undefined;
 
     setSsBanner({ survivors: last.survivors, population: last.population, streak: ssStreakRef.current, sparkData });
