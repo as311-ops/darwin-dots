@@ -68,6 +68,59 @@ function SparklineSVG({ data }: { data: number[] }) {
   );
 }
 
+function SsKpi({ banner }: { banner: { survivors: number; population: number; streak: number; sparkData?: number[] } }) {
+  const { survivors, population, streak, sparkData } = banner;
+  const rate = population > 0 ? survivors / population : 0;
+  const pct = Math.round(rate * 100);
+
+  const color = pct >= 60 ? 'text-emerald-400' : pct >= 30 ? 'text-amber-400' : pct > 0 ? 'text-red-400' : 'text-red-500';
+  const ringColor = pct >= 60 ? 'stroke-emerald-500' : pct >= 30 ? 'stroke-amber-500' : 'stroke-red-500';
+  const r = 44;
+  const circumference = 2 * Math.PI * r;
+  const dashOffset = circumference - circumference * rate;
+
+  return (
+    <div className="absolute inset-x-0 bottom-16 flex justify-center pointer-events-none select-none">
+      <div className="bg-zinc-950/80 backdrop-blur-sm border border-zinc-800/40 rounded-2xl px-7 py-4 flex items-center gap-5">
+        {/* Circular progress */}
+        <div className="relative flex-shrink-0">
+          <svg width="100" height="100" className="-rotate-90">
+            <circle cx="50" cy="50" r={r} fill="none" stroke="#27272a" strokeWidth="6" />
+            <circle
+              cx="50" cy="50" r={r}
+              fill="none"
+              className={`${ringColor} transition-all duration-700`}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className={`font-mono font-bold text-2xl ${color} transition-colors duration-700`}>{pct}%</span>
+          </div>
+        </div>
+        {/* Stats + sparkline */}
+        <div className="min-w-0">
+          <div className={`text-xl font-bold font-mono tabular-nums leading-tight ${color} transition-colors duration-700`}>
+            {survivors.toLocaleString()} <span className="text-zinc-600 font-normal text-base">/ {population.toLocaleString()}</span>
+          </div>
+          <div className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">survival rate</div>
+          {streak > 1 && (
+            <div className="text-[10px] text-zinc-600 font-mono mt-1.5">{streak} gens streak</div>
+          )}
+          {sparkData && sparkData.length >= 2 && (
+            <div className="mt-2">
+              <SparklineSVG data={sparkData} />
+              <div className="text-[9px] text-zinc-700 mt-0.5 text-right">{sparkData.length} gens</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [config, setConfig] = useState<SimConfig>(
     IS_SCREENSAVER ? { ...DEFAULT_CONFIG, ...PRESETS[SCREENSAVER_INITIAL_IDX].config } : DEFAULT_CONFIG
@@ -150,8 +203,7 @@ export default function App() {
     setSsBanner({ survivors: last.survivors, population: last.population, streak: ssStreakRef.current, sparkData });
 
     const flashId = setTimeout(() => setSsFlash(null), 1500);
-    const bannerId = setTimeout(() => setSsBanner(null), 3500);
-    return () => { clearTimeout(flashId); clearTimeout(bannerId); };
+    return () => clearTimeout(flashId);
   }, [history.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Responsive breakpoints
@@ -349,33 +401,9 @@ export default function App() {
           />
         )}
 
-        {/* Survivor banner + sparkline */}
+        {/* Survival Rate KPI — permanent, centered bottom */}
         {ssBanner && (
-          <div
-            className="absolute inset-x-0 bottom-20 flex justify-center pointer-events-none select-none"
-            style={{ animation: 'ssBannerIn 3.5s ease-out forwards' }}
-          >
-            <div className="bg-zinc-950/75 backdrop-blur-sm border border-zinc-800/50 rounded-xl px-8 py-4 text-center">
-              <div className={`text-2xl font-bold font-mono tabular-nums ${
-                ssBanner.survivors === 0 ? 'text-red-400' :
-                ssBanner.survivors / ssBanner.population > 0.75 ? 'text-emerald-400' : 'text-zinc-200'
-              }`}>
-                {ssBanner.survivors.toLocaleString()} / {ssBanner.population.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">survived</div>
-              {ssBanner.streak > 1 && (
-                <div className="text-[10px] text-zinc-600 font-mono mt-2">
-                  {ssBanner.streak} gens without wipeout
-                </div>
-              )}
-              {ssBanner.sparkData && (
-                <div className="mt-3">
-                  <SparklineSVG data={ssBanner.sparkData} />
-                  <div className="text-[9px] text-zinc-700 mt-1">last {ssBanner.sparkData.length} generations</div>
-                </div>
-              )}
-            </div>
-          </div>
+          <SsKpi banner={ssBanner} />
         )}
 
         {/* Bottom bar */}
