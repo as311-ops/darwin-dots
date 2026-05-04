@@ -8,6 +8,7 @@
   --animate-antenna: antenna 2.5s ease-in-out infinite;
   --animate-blink: blink 4s ease-in-out infinite;
   --animate-legs: legs 1.8s ease-in-out infinite;
+  --animate-tutorial-step: tutorialStep 0.22s ease-out;
 }
 
 @keyframes antenna {
@@ -50,4 +51,9 @@
   12%  { opacity: 1; transform: translateY(0); }
   75%  { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes tutorialStep {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
