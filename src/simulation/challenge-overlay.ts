@@ -120,6 +120,41 @@ export function getChallengeOverlay(
         radius: sizeX / 4,
       }];
 
+    case Challenge.CHALLENGE_THE_TIDE: {
+      const step = simStep ?? 0;
+      const maxSteps = stepsPerGeneration ?? 300;
+      const cx = sizeX / 2 + (sizeX / 3) * Math.sin(2 * Math.PI * step / maxSteps);
+      return [{
+        type: 'circle',
+        cx,
+        cy: sizeY / 2,
+        radius: sizeX / 6,
+      }];
+    }
+
+    case Challenge.CHALLENGE_HOT_POTATO: {
+      const step = simStep ?? 0;
+      const maxSteps = stepsPerGeneration ?? 300;
+      const phase1End = Math.floor(maxSteps / 3);
+      const phase2End = Math.floor(2 * maxSteps / 3);
+      const r = sizeX / 5;
+      if (step < phase1End) {
+        return [{ type: 'circle', cx: sizeX / 6, cy: sizeY - sizeY / 6, radius: r }];
+      } else if (step < phase2End) {
+        return [{ type: 'circle', cx: sizeX - sizeX / 6, cy: sizeY / 6, radius: r }];
+      } else {
+        return [{ type: 'circle', cx: sizeX / 2, cy: sizeY / 2, radius: r }];
+      }
+    }
+
+    case Challenge.CHALLENGE_BOOMERANG:
+      return [{
+        type: 'circle',
+        cx: sizeX - 1 - sizeX / 8,
+        cy: sizeY - 1 - sizeY / 8,
+        radius: sizeX / 8,
+      }];
+
     default:
       return [];
   }
