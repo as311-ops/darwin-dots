@@ -5,9 +5,10 @@ import { PRESETS } from "./Presets";
 
 interface SplashScreenProps {
   onStart: (config: SimConfig) => void;
+  onOpenTutorial?: () => void;
 }
 
-export default function SplashScreen({ onStart }: SplashScreenProps) {
+export default function SplashScreen({ onStart, onOpenTutorial: _onOpenTutorial }: SplashScreenProps) {
   const [hoveredPreset, setHoveredPreset] = useState<number | null>(null);
 
   return (

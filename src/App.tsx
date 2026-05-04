@@ -10,6 +10,7 @@ import MatchSummaryModal from "./components/MatchSummary";
 import ChallengeInfo from "./components/ChallengeInfo";
 import LineageTree from "./components/LineageTree";
 import SplashScreen from "./components/SplashScreen";
+import TutorialWizard from "./components/TutorialWizard";
 import DarwinLogo from "./components/DarwinLogo";
 import { PRESETS } from "./components/Presets";
 import { useSimulation } from "./hooks/useSimulation";
@@ -144,6 +145,8 @@ export default function App() {
   const [ssBanner, setSsBanner] = useState<SsBanner | null>(null);
   const [ssFlash, setSsFlash] = useState<'wipeout' | 'victory' | null>(null);
   const ssStreakRef = useRef(0);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const tutorialFromSplash = useRef(false);
 
   const screensaverInitConfig = IS_SCREENSAVER
     ? { ...DEFAULT_CONFIG, ...PRESETS[screensaverPresetIdx.current].config }
@@ -206,6 +209,16 @@ export default function App() {
     const flashId = setTimeout(() => setSsFlash(null), 1500);
     return () => clearTimeout(flashId);
   }, [history.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (IS_SCREENSAVER || seedGenome) return;
+    try {
+      if (!localStorage.getItem('darwins_arena_tutorial_seen')) {
+        tutorialFromSplash.current = true;
+        setShowTutorial(true);
+      }
+    } catch { /* localStorage nicht verfügbar */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Responsive breakpoints
   const isNarrow = windowWidth < 900;
@@ -334,6 +347,25 @@ export default function App() {
     setTimeout(() => start(), 100);
   }, [reset, start]);
 
+  const handleOpenTutorial = useCallback((fromSplash: boolean) => {
+    tutorialFromSplash.current = fromSplash;
+    setShowTutorial(true);
+  }, []);
+
+  const handleTutorialClose = useCallback(() => {
+    setShowTutorial(false);
+  }, []);
+
+  const handleTutorialFinish = useCallback((presetConfig?: SimConfig) => {
+    try {
+      localStorage.setItem('darwins_arena_tutorial_seen', '1');
+    } catch { /* localStorage nicht verfügbar */ }
+    setShowTutorial(false);
+    if (presetConfig) {
+      handleSplashStart(presetConfig);
+    }
+  }, [handleSplashStart]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const lastH = historyLen > 0 ? history[historyLen - 1] : null;
 
   const sidebar = (
@@ -425,7 +457,18 @@ export default function App() {
   }
 
   if (showSplash) {
-    return <SplashScreen onStart={handleSplashStart} />;
+    return (
+      <>
+        <SplashScreen onStart={handleSplashStart} onOpenTutorial={() => handleOpenTutorial(true)} />
+        {showTutorial && (
+          <TutorialWizard
+            onClose={handleTutorialClose}
+            onFinish={handleTutorialFinish}
+            fromSplash={tutorialFromSplash.current}
+          />
+        )}
+      </>
+    );
   }
 
   return (
@@ -442,6 +485,13 @@ export default function App() {
             playShare();
           } : undefined}
           onClose={() => { setSummary(null); setSummaryProfile(null); setSummaryGenome(null); }}
+        />
+      )}
+      {showTutorial && (
+        <TutorialWizard
+          onClose={handleTutorialClose}
+          onFinish={handleTutorialFinish}
+          fromSplash={tutorialFromSplash.current}
         />
       )}
 
@@ -461,6 +511,17 @@ export default function App() {
             Natural selection in real time
             <span className="text-zinc-600 ml-2">— Click on a Darwin-Dot</span>
           </p>
+        </div>
+        <div className="ml-auto">
+          <button
+            onClick={() => handleOpenTutorial(false)}
+            className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5
+                       text-zinc-500 hover:text-zinc-200 hover:border-zinc-700
+                       text-xs font-mono transition-colors"
+            title="Wie funktioniert Darwin's Arena?"
+          >
+            ?
+          </button>
         </div>
       </div>
 
