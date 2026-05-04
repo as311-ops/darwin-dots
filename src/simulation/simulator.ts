@@ -85,7 +85,7 @@ export class Simulator {
   // Pre-allocated callbacks — avoid creating new closures per agent per step
   private _currentIndiv: Indiv | null = null;
   private _currentCacheToken = 0;
-  private readonly _killEventCallback: (x: number, y: number) => void;
+  private readonly _killEventCallback: (killer: Indiv, x: number, y: number) => void;
   private readonly _getSensorFunc: (sensor: number, simStep: number) => number;
 
   constructor(params?: Partial<SimParams>) {
@@ -94,7 +94,15 @@ export class Simulator {
     this.peeps = new Peeps();
     this.signals = new Signals();
     // Bind once — reused across all agents and steps
-    this._killEventCallback = (x: number, y: number) => { this._pendingKillEvents.push(x, y); };
+    this._killEventCallback = (killer: Indiv, x: number, y: number) => {
+      this._pendingKillEvents.push(x, y);
+      if ((this.params.challenge as Challenge) === Challenge.CHALLENGE_HUNT_OR_HIDE) {
+        const currentKills = killer.challengeBits & 0xFF;
+        if (currentKills < 255) {
+          killer.challengeBits = (killer.challengeBits & ~0xFF) | (currentKills + 1);
+        }
+      }
+    };
     this._getSensorFunc = (sensor: number, simStep: number) =>
       this.getCachedSensorValue(this._currentIndiv!, sensor as Sensor, simStep, this._currentCacheToken);
   }
@@ -401,6 +409,77 @@ export class Simulator {
         const indiv = this.peeps.getIndiv(i);
         if (!indiv.alive) continue;
         if (this.grid.isBorder(indiv.loc)) {
+          indiv.challengeBits |= 1;
+        }
+      }
+    }
+
+    // The Tide: count ticks spent inside the oscillating safe zone
+    if (challenge === Challenge.CHALLENGE_THE_TIDE) {
+      const zoneRadius = this.params.sizeX / 6;
+      const zoneX = this.params.sizeX / 2
+        + (this.params.sizeX / 3) * Math.sin(2 * Math.PI * this.simStep / this.params.stepsPerGeneration);
+      const zoneY = this.params.sizeY / 2;
+      for (let i = 1; i <= this.peeps.population; i++) {
+        const indiv = this.peeps.getIndiv(i);
+        if (!indiv.alive) continue;
+        const dx = indiv.loc.x - zoneX;
+        const dy = indiv.loc.y - zoneY;
+        if (Math.sqrt(dx * dx + dy * dy) <= zoneRadius) {
+          const ticks = indiv.challengeBits & 0xFFFF;
+          if (ticks < 0xFFFF) {
+            indiv.challengeBits = (indiv.challengeBits & ~0xFFFF) | (ticks + 1);
+          }
+        }
+      }
+    }
+
+    // Hot Potato: set phase bit when creature is in the correct zone during active phase
+    if (challenge === Challenge.CHALLENGE_HOT_POTATO) {
+      const s = this.params.stepsPerGeneration;
+      const phase1End = Math.floor(s / 3);
+      const phase2End = Math.floor(2 * s / 3);
+      const r = this.params.sizeX / 5;
+
+      // Phase zones (NW, SE, Center)
+      const zones = [
+        { x: this.params.sizeX / 6,                          y: this.params.sizeY - this.params.sizeY / 6 }, // NW
+        { x: this.params.sizeX - this.params.sizeX / 6,      y: this.params.sizeY / 6 },                      // SE
+        { x: this.params.sizeX / 2,                          y: this.params.sizeY / 2 },                       // Center
+      ];
+
+      let activePhase = -1;
+      if (this.simStep < phase1End) activePhase = 0;
+      else if (this.simStep < phase2End) activePhase = 1;
+      else activePhase = 2;
+
+      const zone = zones[activePhase];
+      const bit = 1 << activePhase;
+
+      for (let i = 1; i <= this.peeps.population; i++) {
+        const indiv = this.peeps.getIndiv(i);
+        if (!indiv.alive) continue;
+        if (indiv.challengeBits & bit) continue; // already earned this phase
+        const dx = indiv.loc.x - zone.x;
+        const dy = indiv.loc.y - zone.y;
+        if (Math.sqrt(dx * dx + dy * dy) <= r) {
+          indiv.challengeBits |= bit;
+        }
+      }
+    }
+
+    // Boomerang: set bit 0 when creature enters NE checkpoint
+    if (challenge === Challenge.CHALLENGE_BOOMERANG) {
+      const checkX = this.params.sizeX - 1 - this.params.sizeX / 8;
+      const checkY = this.params.sizeY - 1 - this.params.sizeY / 8;
+      const checkRadius = this.params.sizeX / 8;
+      for (let i = 1; i <= this.peeps.population; i++) {
+        const indiv = this.peeps.getIndiv(i);
+        if (!indiv.alive) continue;
+        if (indiv.challengeBits & 1) continue; // already visited
+        const dx = indiv.loc.x - checkX;
+        const dy = indiv.loc.y - checkY;
+        if (Math.sqrt(dx * dx + dy * dy) <= checkRadius) {
           indiv.challengeBits |= 1;
         }
       }
