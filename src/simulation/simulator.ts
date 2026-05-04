@@ -416,9 +416,9 @@ export class Simulator {
 
     // The Tide: count ticks spent inside the oscillating safe zone
     if (challenge === Challenge.CHALLENGE_THE_TIDE) {
-      const zoneRadius = this.params.sizeX / 6;
+      const zoneRadius = this.params.sizeX / 4;
       const zoneX = this.params.sizeX / 2
-        + (this.params.sizeX / 3) * Math.sin(2 * Math.PI * this.simStep / this.params.stepsPerGeneration);
+        + (this.params.sizeX / 4) * Math.sin(2 * Math.PI * this.simStep / this.params.stepsPerGeneration);
       const zoneY = this.params.sizeY / 2;
       for (let i = 1; i <= this.peeps.population; i++) {
         const indiv = this.peeps.getIndiv(i);
