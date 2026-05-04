@@ -102,4 +102,24 @@ export const CHALLENGE_INFO: Record<number, ChallengeInfo> = {
     brief: "Sacrifice yourself in the northeast so others survive in the southwest.",
     flavor: "The philosopher's dilemma as evolution: a circle in the southwest is the safety zone. But the highest fitness scores go to those who venture into the sacrifice zone in the northeast. Selfless genes — do they really exist?",
   },
+  19: {
+    title: "The Tide",
+    brief: "Stay in the moving zone as long as possible.",
+    flavor: "A glowing protection sphere drifts back and forth across the arena like a tide. Only those who follow it survive. Standing still is death — but so is chasing blindly. The oscillator is your compass.",
+  },
+  20: {
+    title: "Hunt or Hide",
+    brief: "Kill rivals or outlast them — survival favors the active.",
+    flavor: "The arena has become a battlefield. Every Darwin-Dot can kill the one in front of it. Die and you're gone. Kill and you earn the right to reproduce. But every hunter is also prey. Will you strike first — or find a corner no one watches?",
+  },
+  21: {
+    title: "Hot Potato",
+    brief: "Reach all three zones before each phase ends.",
+    flavor: "Three zones, three deadlines: northwest first, southeast second, then the center. Miss two of three and you're culled. The arena is now a race against time — and the clock keeps resetting.",
+  },
+  22: {
+    title: "Boomerang",
+    brief: "Reach the northeast checkpoint — then return home.",
+    flavor: "You must venture to the far northeast corner and then find your way back to where you were born. Distance traveled means nothing. Only the round trip counts. Explore — and return.",
+  },
 };
