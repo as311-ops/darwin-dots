@@ -346,7 +346,7 @@ export function passedSurvivalCriterion(
     // Score = ticks_in_zone / stepsPerGeneration. challengeBits stores the tick count (low 16 bits).
     case Challenge.CHALLENGE_THE_TIDE: {
       const ticksInZone = indiv.challengeBits & 0xFFFF;
-      const score = ticksInZone / params.stepsPerGeneration;
+      const score = Math.min(1.0, ticksInZone / params.stepsPerGeneration);
       if (score > 0.3) {
         return { passed: true, score };
       }
@@ -365,7 +365,7 @@ export function passedSurvivalCriterion(
     // challengeBits: bit 0 = phase 1 reached, bit 1 = phase 2, bit 2 = phase 3.
     case Challenge.CHALLENGE_HOT_POTATO: {
       const bits = indiv.challengeBits & 0b111;
-      const phases = [0, 1, 2].filter(i => (bits >> i) & 1).length;
+      const phases = (bits & 1) + ((bits >> 1) & 1) + ((bits >> 2) & 1);
       const score = phases / 3.0;
       if (phases >= 2) {
         return { passed: true, score };
