@@ -440,7 +440,7 @@ export enum Action {
 }
 
 // ---------------------------------------------------------------------------
-// Challenge enum (all 19 challenge types from biosim4)
+// Challenge enum — survival challenge types
 // ---------------------------------------------------------------------------
 export enum Challenge {
   CHALLENGE_CIRCLE = 0,
