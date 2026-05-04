@@ -30,6 +30,7 @@ const CHALLENGE_LABELS: Record<number, string> = {
   8: "Migration", 9: "Center Sparse", 10: "Left Eighth",
   11: "Radioactive Walls", 12: "At Wall", 13: "Touch Wall",
   14: "East-West", 15: "Near Barrier", 16: "Pairs", 17: "Sequence", 18: "Altruism",
+  19: "The Tide", 20: "Hunt or Hide", 21: "Hot Potato", 22: "Boomerang",
 };
 
 const IS_SCREENSAVER = new URLSearchParams(window.location.search).has("screensaver");
