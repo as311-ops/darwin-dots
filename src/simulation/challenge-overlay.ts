@@ -123,12 +123,12 @@ export function getChallengeOverlay(
     case Challenge.CHALLENGE_THE_TIDE: {
       const step = simStep ?? 0;
       const maxSteps = stepsPerGeneration ?? 300;
-      const cx = sizeX / 2 + (sizeX / 3) * Math.sin(2 * Math.PI * step / maxSteps);
+      const cx = sizeX / 2 + (sizeX / 4) * Math.sin(2 * Math.PI * step / maxSteps);
       return [{
         type: 'circle',
         cx,
         cy: sizeY / 2,
-        radius: sizeX / 6,
+        radius: sizeX / 4,
       }];
     }
 

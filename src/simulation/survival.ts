@@ -347,7 +347,7 @@ export function passedSurvivalCriterion(
     case Challenge.CHALLENGE_THE_TIDE: {
       const ticksInZone = indiv.challengeBits & 0xFFFF;
       const score = Math.min(1.0, ticksInZone / params.stepsPerGeneration);
-      if (score > 0.3) {
+      if (score > 0.2) {
         return { passed: true, score };
       }
       return { passed: false, score: 0.0 };
