@@ -8,7 +8,7 @@ interface SplashScreenProps {
   onOpenTutorial?: () => void;
 }
 
-export default function SplashScreen({ onStart, onOpenTutorial: _onOpenTutorial }: SplashScreenProps) {
+export default function SplashScreen({ onStart, onOpenTutorial }: SplashScreenProps) {
   const [hoveredPreset, setHoveredPreset] = useState<number | null>(null);
 
   return (
@@ -76,9 +76,18 @@ export default function SplashScreen({ onStart, onOpenTutorial: _onOpenTutorial 
         <p className="text-zinc-500 text-sm text-center mb-1">
           Natural Selection in Real Time
         </p>
-        <p className="text-zinc-600 text-xs text-center mb-10">
+        <p className="text-zinc-600 text-xs text-center mb-4">
           Watch neural networks evolve to master challenges
         </p>
+
+        {onOpenTutorial && (
+          <button
+            onClick={onOpenTutorial}
+            className="text-xs text-zinc-500 hover:text-emerald-400 transition-colors border border-zinc-800 hover:border-emerald-800 rounded-md px-4 py-1.5 mb-6 mt-1"
+          >
+            Wie funktioniert's? →
+          </button>
+        )}
 
         {/* Divider */}
         <div className="w-48 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent mb-8" />
