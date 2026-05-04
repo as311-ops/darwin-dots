@@ -109,7 +109,7 @@ export const CHALLENGE_INFO: Record<number, ChallengeInfo> = {
   },
   20: {
     title: "Hunt or Hide",
-    brief: "Kill rivals or outlast them — survival favors the active.",
+    brief: "Kill rivals or outlast them — requires Kill enabled in settings.",
     flavor: "The arena has become a battlefield. Every Darwin-Dot can kill the one in front of it. Die and you're gone. Kill and you earn the right to reproduce. But every hunter is also prey. Will you strike first — or find a corner no one watches?",
   },
   21: {
