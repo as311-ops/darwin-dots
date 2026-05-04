@@ -70,6 +70,10 @@ const CHALLENGE_NAMES: Record<number, string> = {
   16: "Pair Formation",
   17: "Location Sequence",
   18: "Altruism",
+  19: "The Tide",
+  20: "Hunt or Hide",
+  21: "Hot Potato",
+  22: "Boomerang",
 };
 
 const BARRIER_NAMES: Record<number, string> = {

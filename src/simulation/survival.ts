@@ -22,6 +22,7 @@ export interface SurvivalParams {
   sizeX: number;
   sizeY: number;
   challenge: Challenge;
+  stepsPerGeneration: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -337,6 +338,52 @@ export function passedSurvivalCriterion(
       const distance = offset.length();
       if (distance <= radius) {
         return { passed: true, score: (radius - distance) / radius };
+      }
+      return { passed: false, score: 0.0 };
+    }
+
+    // Survivors are those who spent the most time inside the oscillating safe zone.
+    // Score = ticks_in_zone / stepsPerGeneration. challengeBits stores the tick count (low 16 bits).
+    case Challenge.CHALLENGE_THE_TIDE: {
+      const ticksInZone = indiv.challengeBits & 0xFFFF;
+      const score = Math.min(1.0, ticksInZone / params.stepsPerGeneration);
+      if (score > 0.3) {
+        return { passed: true, score };
+      }
+      return { passed: false, score: 0.0 };
+    }
+
+    // All alive creatures pass; score = base (0.4) + kill bonus (up to 0.6).
+    // challengeBits low 8 bits = kill count (capped at 255).
+    case Challenge.CHALLENGE_HUNT_OR_HIDE: {
+      const kills = indiv.challengeBits & 0xFF;
+      const score = 0.4 + Math.min(0.6, kills * 0.15);
+      return { passed: true, score };
+    }
+
+    // Survivors reached at least 2 of 3 zones in time.
+    // challengeBits: bit 0 = phase 1 reached, bit 1 = phase 2, bit 2 = phase 3.
+    case Challenge.CHALLENGE_HOT_POTATO: {
+      const bits = indiv.challengeBits & 0b111;
+      const phases = (bits & 1) + ((bits >> 1) & 1) + ((bits >> 2) & 1);
+      const score = phases / 3.0;
+      if (phases >= 2) {
+        return { passed: true, score };
+      }
+      return { passed: false, score: 0.0 };
+    }
+
+    // Survivor visited the NE checkpoint AND returned near birthLoc.
+    // challengeBits bit 0 = checkpoint visited.
+    case Challenge.CHALLENGE_BOOMERANG: {
+      const visited = (indiv.challengeBits & 1) !== 0;
+      if (!visited) {
+        return { passed: false, score: 0.0 };
+      }
+      const returnRadius = params.sizeX / 6;
+      const dist = indiv.loc.subtract(indiv.birthLoc).length();
+      if (dist < returnRadius) {
+        return { passed: true, score: Math.max(0, 1.0 - dist / returnRadius) };
       }
       return { passed: false, score: 0.0 };
     }

@@ -440,7 +440,7 @@ export enum Action {
 }
 
 // ---------------------------------------------------------------------------
-// Challenge enum (all 19 challenge types from biosim4)
+// Challenge enum — survival challenge types
 // ---------------------------------------------------------------------------
 export enum Challenge {
   CHALLENGE_CIRCLE = 0,
@@ -462,4 +462,8 @@ export enum Challenge {
   CHALLENGE_PAIRS = 16,
   CHALLENGE_LOCATION_SEQUENCE = 17,
   CHALLENGE_ALTRUISM = 18,
+  CHALLENGE_THE_TIDE = 19,
+  CHALLENGE_HUNT_OR_HIDE = 20,
+  CHALLENGE_HOT_POTATO = 21,
+  CHALLENGE_BOOMERANG = 22,
 }
