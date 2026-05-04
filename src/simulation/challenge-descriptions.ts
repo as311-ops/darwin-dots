@@ -114,7 +114,7 @@ export const CHALLENGE_INFO: Record<number, ChallengeInfo> = {
   },
   21: {
     title: "Hot Potato",
-    brief: "Reach all three zones before each phase ends.",
+    brief: "Reach at least two of three zones before each phase ends.",
     flavor: "Three zones, three deadlines: northwest first, southeast second, then the center. Miss two of three and you're culled. The arena is now a race against time — and the clock keeps resetting.",
   },
   22: {
