@@ -85,7 +85,7 @@ export default function SplashScreen({ onStart, onOpenTutorial }: SplashScreenPr
             onClick={onOpenTutorial}
             className="text-xs text-zinc-500 hover:text-emerald-400 transition-colors border border-zinc-800 hover:border-emerald-800 rounded-md px-4 py-1.5 mb-6 mt-1"
           >
-            Wie funktioniert's? →
+            How does it work? →
           </button>
         )}
 

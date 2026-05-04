@@ -518,7 +518,7 @@ export default function App() {
             className="rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5
                        text-zinc-500 hover:text-zinc-200 hover:border-zinc-700
                        text-xs font-mono transition-colors"
-            title="Wie funktioniert Darwin's Arena?"
+            title="How does Darwin's Arena work?"
           >
             ?
           </button>

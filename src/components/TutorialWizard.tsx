@@ -12,9 +12,9 @@ interface TutorialWizardProps {
 
 const STEPS = [
   {
-    subtitle: "WAS IST DAS?",
+    subtitle: "WHAT IS THIS?",
     title: "Darwin's Arena",
-    body: "Ein lebendiges Evolutionsexperiment. Hunderte Kreaturen — jede mit einem neuronalen Netz als Gehirn — konkurrieren, passen sich an und sterben. Über Generationen überleben nur die Fittesten und geben ihre Gene weiter. Du schaust natürlicher Selektion in Echtzeit zu.",
+    body: "A living evolution experiment. Hundreds of creatures — each with a neural network brain — compete, adapt, and die. Over generations only the fittest survive to pass on their genes. You are watching natural selection happen in real time.",
     visual: (
       <pre className="font-mono text-[13px] leading-[16px] select-none text-center">
         <span className="text-yellow-300">{"  ~"}</span>
@@ -46,9 +46,9 @@ const STEPS = [
     ),
   },
   {
-    subtitle: "DIE SPIELER",
+    subtitle: "THE PLAYERS",
     title: "Darwin-Dots",
-    body: "Jede Kreatur ist ein autonomer Agent auf einem 2D-Gitter. Sie nimmt ihre Umgebung über Sensoren wahr, verarbeitet die Eingaben in einem neuronalen Netz und führt jeden Simulationsschritt Aktionen aus. Keine hartcodierten Regeln — alles Verhalten entsteht aus evolvierten Genen.",
+    body: "Each creature is an autonomous agent on a 2D grid. It perceives its environment through sensors, processes inputs through a neural network, and executes actions every simulation step. No hard-coded rules — all behavior emerges from evolved genes.",
     visual: (
       <svg width="240" height="90" viewBox="0 0 240 90" className="mx-auto">
         <circle cx="60" cy="45" r="14" fill="#10b981" opacity="0.9" />
@@ -79,51 +79,51 @@ const STEPS = [
             <path d="M0,0 L6,3 L0,6 Z" fill="#fbbf24" />
           </marker>
         </defs>
-        <text x="50" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Sensoren</text>
-        <text x="120" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Neuronen</text>
-        <text x="190" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Aktionen</text>
+        <text x="50" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Sensors</text>
+        <text x="120" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Neurons</text>
+        <text x="190" y="84" fontSize="8" fill="#6b7280" textAnchor="middle">Actions</text>
       </svg>
     ),
   },
   {
-    subtitle: "DER BAUPLAN",
-    title: "Genome & Gene",
-    body: "Jede Kreatur trägt ein Genom: eine Folge von Genen. Jedes Gen kodiert eine Verbindung: eine Quelle (Sensor oder Neuron), ein Gewicht (wie stark sie beeinflusst) und ein Ziel (Neuron oder Aktion). Das Genom ist der vollständige Schaltplan des Gehirns — als Liste von 32-Bit-Integers.",
+    subtitle: "THE BLUEPRINT",
+    title: "Genome & Genes",
+    body: "Every creature carries a genome: a sequence of genes. Each gene encodes one connection — a Source (sensor or neuron), a Weight (how strongly it influences), and a Sink (neuron or action). The genome is the creature's complete brain wiring diagram, packed as a list of 32-bit integers.",
     visual: (
       <div className="font-mono text-[11px] leading-relaxed text-center space-y-1">
-        <div className="text-zinc-500 mb-2">Ein Gen = eine Synapsen-Verbindung</div>
+        <div className="text-zinc-500 mb-2">One gene = one synaptic connection</div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="bg-cyan-950/60 border border-cyan-800/40 text-cyan-300 rounded px-2 py-1">
-            QUELLE<br /><span className="text-[9px] text-cyan-500">Sensor / Neuron</span>
+            SOURCE<br /><span className="text-[9px] text-cyan-500">Sensor / Neuron</span>
           </span>
           <div className="text-center">
             <div className="text-emerald-400 font-bold">+2.4</div>
-            <div className="text-zinc-600 text-[9px]">Gewicht</div>
+            <div className="text-zinc-600 text-[9px]">Weight</div>
             <div className="text-zinc-700">──→</div>
           </div>
           <span className="bg-violet-950/60 border border-violet-800/40 text-violet-300 rounded px-2 py-1">
-            ZIEL<br /><span className="text-[9px] text-violet-500">Neuron / Aktion</span>
+            SINK<br /><span className="text-[9px] text-violet-500">Neuron / Action</span>
           </span>
         </div>
         <div className="text-zinc-600 text-[9px] mt-3">
-          Genome mit 4–64 Genen · bis zu 20 Neuronen
+          Genomes with 4–64 genes · up to 20 neurons
         </div>
       </div>
     ),
   },
   {
-    subtitle: "WAHRNEHMUNG",
-    title: "Was eine Kreatur sieht",
-    body: "Jede Kreatur liest bis zu 21 Sensorkanäle, alle normalisiert auf 0,0–1,0. Diese zeigen ihr, wo sie ist, wie dicht ihre Nachbarschaft ist, wie nah Wände und Barrieren sind, welche Pheromon-Spuren in der Nähe sind und mehr. Gene verdrahten diese Eingaben ins Gehirn.",
+    subtitle: "PERCEPTION",
+    title: "What a Creature Senses",
+    body: "Each creature reads up to 21 sensor channels, all normalized to 0.0–1.0. These tell it where it is, how crowded its neighborhood is, how close walls and barriers are, what pheromone trails are nearby, and more. Genes wire these inputs into the brain.",
     visual: (
       <div className="grid grid-cols-2 gap-1.5 text-[10px]">
         {[
           { label: "LOC_X / LOC_Y", desc: "Position", color: "text-cyan-300 bg-cyan-950/60 border-cyan-800/40" },
-          { label: "POPULATION", desc: "Nachbarn", color: "text-emerald-300 bg-emerald-950/60 border-emerald-800/40" },
-          { label: "BARRIER_FWD", desc: "Wände & Barrieren", color: "text-red-300 bg-red-950/60 border-red-800/40" },
-          { label: "BOUNDARY_DIST", desc: "Abstand Rand", color: "text-orange-300 bg-orange-950/60 border-orange-800/40" },
-          { label: "SIGNAL0", desc: "Pheromon-Spur", color: "text-yellow-300 bg-yellow-950/60 border-yellow-800/40" },
-          { label: "RANDOM / OSC1", desc: "Intern / Zufall", color: "text-zinc-300 bg-zinc-800/60 border-zinc-700/40" },
+          { label: "POPULATION", desc: "Neighbors", color: "text-emerald-300 bg-emerald-950/60 border-emerald-800/40" },
+          { label: "BARRIER_FWD", desc: "Walls & Barriers", color: "text-red-300 bg-red-950/60 border-red-800/40" },
+          { label: "BOUNDARY_DIST", desc: "Edge Distance", color: "text-orange-300 bg-orange-950/60 border-orange-800/40" },
+          { label: "SIGNAL0", desc: "Pheromone Trail", color: "text-yellow-300 bg-yellow-950/60 border-yellow-800/40" },
+          { label: "RANDOM / OSC1", desc: "Internal / Random", color: "text-zinc-300 bg-zinc-800/60 border-zinc-700/40" },
         ].map(s => (
           <div key={s.label} className={`rounded border px-2 py-1 ${s.color}`}>
             <div className="font-mono font-semibold">{s.label}</div>
@@ -134,20 +134,20 @@ const STEPS = [
     ),
   },
   {
-    subtitle: "VERHALTEN",
-    title: "Was eine Kreatur tun kann",
-    body: "Aktions-Neuronen bestimmen, was eine Kreatur jeden Schritt macht. Sie kann sich in 8 Richtungen oder relativ zu ihrer Blickrichtung bewegen, Pheromon-Signale für andere aussenden, ihren eigenen Oszillator-Rhythmus einstellen oder — wenn Kill aktiviert ist — die Kreatur vor ihr angreifen.",
+    subtitle: "BEHAVIOR",
+    title: "What a Creature Can Do",
+    body: "Action neurons determine what a creature does each step. It can move in 8 compass directions or relative to its heading, emit pheromone signals for others to sense, tune its own oscillator period, or — if Kill is enabled — attack the creature directly in front of it.",
     visual: (
       <div className="grid grid-cols-3 gap-1 text-[9px]">
         {[
-          { icon: "↑", label: "Vorwärts", color: "text-emerald-400" },
-          { icon: "↙↗", label: "N/S/O/W", color: "text-emerald-400" },
-          { icon: "↺", label: "Zufällig", color: "text-emerald-400" },
-          { icon: "↔", label: "Seitwärts", color: "text-emerald-400" },
-          { icon: "〰", label: "Signal senden", color: "text-yellow-400" },
-          { icon: "⏱", label: "Rhythmus", color: "text-cyan-400" },
-          { icon: "🔭", label: "Sichtweite", color: "text-cyan-400" },
-          { icon: "📡", label: "Reaktivität", color: "text-cyan-400" },
+          { icon: "↑", label: "Forward", color: "text-emerald-400" },
+          { icon: "↙↗", label: "N/S/E/W", color: "text-emerald-400" },
+          { icon: "↺", label: "Random", color: "text-emerald-400" },
+          { icon: "↔", label: "Sideways", color: "text-emerald-400" },
+          { icon: "〰", label: "Emit Signal", color: "text-yellow-400" },
+          { icon: "⏱", label: "Rhythm", color: "text-cyan-400" },
+          { icon: "🔭", label: "Vision", color: "text-cyan-400" },
+          { icon: "📡", label: "Sensitivity", color: "text-cyan-400" },
           { icon: "⚔", label: "Kill (opt.)", color: "text-red-400" },
         ].map(a => (
           <div key={a.label} className="bg-zinc-800/70 rounded px-1.5 py-1 text-center">
@@ -159,19 +159,19 @@ const STEPS = [
     ),
   },
   {
-    subtitle: "DIE MASCHINE",
-    title: "Wie Evolution funktioniert",
-    body: "Jede Generation läuft für eine feste Schrittanzahl. Danach wird jede Kreatur von der Challenge bewertet. Die Besten werden Eltern: ihre Genome werden kopiert, gekreuzt und mutiert, um die nächste Generation zu erzeugen. Über Hunderte von Generationen verbreiten sich nützliche Gen-Muster in der Population.",
+    subtitle: "THE ENGINE",
+    title: "How Evolution Works",
+    body: "Each generation runs for a fixed number of steps. After time is up, every creature is scored by the challenge's fitness function. The top performers become parents: their genomes are copied, crossed over, and mutated to produce the next generation. Over hundreds of generations, useful gene patterns spread through the population.",
     visual: (
       <div className="flex items-center justify-center gap-1 flex-wrap text-[9px]">
         {[
-          { label: "Gen N läuft", color: "text-zinc-300 bg-zinc-800" },
+          { label: "Run Gen N", color: "text-zinc-300 bg-zinc-800" },
           { label: "→", color: "text-zinc-600" },
-          { label: "Fitness\nbewerten", color: "text-amber-300 bg-amber-950/60" },
+          { label: "Score\nFitness", color: "text-amber-300 bg-amber-950/60" },
           { label: "→", color: "text-zinc-600" },
-          { label: "Eltern\nwählen", color: "text-emerald-300 bg-emerald-950/60" },
+          { label: "Select\nParents", color: "text-emerald-300 bg-emerald-950/60" },
           { label: "→", color: "text-zinc-600" },
-          { label: "Mutieren &\nKreuzen", color: "text-violet-300 bg-violet-950/60" },
+          { label: "Mutate &\nCross", color: "text-violet-300 bg-violet-950/60" },
           { label: "→", color: "text-zinc-600" },
           { label: "Gen N+1", color: "text-zinc-300 bg-zinc-800" },
         ].map((node, i) =>
@@ -187,18 +187,18 @@ const STEPS = [
     ),
   },
   {
-    subtitle: "DIE REGELN",
-    title: "23 verschiedene Challenges",
-    body: "Die Challenge definiert, was 'fit' bedeutet. In Right Half müssen Überlebende die rechte Seite der Arena erreichen. In Pairs muss jede Kreatur genau einen Partner finden. In Altruism bekommen die höchsten Scores jene, die sich in einer Gefahrenzone opfern. Verschiedene Challenges entwickeln wild unterschiedliche Verhaltensweisen.",
+    subtitle: "THE RULES",
+    title: "23 Different Challenges",
+    body: "The challenge defines what 'fit' means. In Right Half, survivors must cross to the right side of the arena. In Pairs, each creature must find exactly one partner. In Altruism, the highest scores go to those who sacrifice themselves in a danger zone. Different challenges evolve wildly different behaviors.",
     visual: (
       <div className="grid grid-cols-2 gap-1.5 text-[9px]">
         {[
-          { name: "Right Half", desc: "Rechte Seite erreichen" },
-          { name: "Migration", desc: "Weit vom Startpunkt wandern" },
-          { name: "Pairs", desc: "Genau einen Partner finden" },
-          { name: "Altruism", desc: "Sich in Gefahrenzone opfern" },
-          { name: "Boomerang", desc: "Weit weg und zurückkehren" },
-          { name: "Hot Potato", desc: "Checkpoints der Reihe nach" },
+          { name: "Right Half", desc: "Reach the right side" },
+          { name: "Migration", desc: "Wander far from spawn" },
+          { name: "Pairs", desc: "Find exactly one partner" },
+          { name: "Altruism", desc: "Sacrifice in the danger zone" },
+          { name: "Boomerang", desc: "Go far and return" },
+          { name: "Hot Potato", desc: "Hit checkpoints in sequence" },
         ].map(c => (
           <div key={c.name} className="bg-zinc-800/60 rounded border border-zinc-700/30 px-2 py-1.5">
             <div className="text-emerald-400 font-semibold">{c.name}</div>
@@ -209,9 +209,9 @@ const STEPS = [
     ),
   },
   {
-    subtitle: "BEREIT",
-    title: "Bereit, Evolution zu beobachten?",
-    body: "Wähle eine Preset-Challenge und drücke Start. Beobachte Generation 0 — reines Rauschen. Dann sieh zu, wie die fittesten Genome dominieren. Die Simulation betrügt nie: kein Verhalten ist in eine Kreatur hineinkodiert. Alles, was du siehst, wurde von der Evolution selbst entdeckt.",
+    subtitle: "READY",
+    title: "Ready to Watch Evolution?",
+    body: "Pick a preset challenge and hit Start. Watch generation 0 — pure noise. Then watch as the fittest genomes take over. The simulation never cheats: no behavior is hand-coded into any creature. Everything you see was discovered by evolution itself.",
     visual: (
       <div className="animate-pulse">
         <pre className="font-mono text-[13px] leading-[16px] select-none text-center">
@@ -272,13 +272,13 @@ export default function TutorialWizard({ onClose, onFinish, fromSplash }: Tutori
               Tutorial
             </span>
             <span className="text-[10px] text-zinc-500">
-              Schritt {step + 1} von {total}
+              Step {step + 1} of {total}
             </span>
           </div>
           <button
             onClick={onClose}
             className="text-zinc-500 hover:text-zinc-300 transition-colors text-lg leading-none px-1"
-            title="Tutorial schließen"
+            title="Close tutorial"
           >
             ×
           </button>
@@ -312,7 +312,7 @@ export default function TutorialWizard({ onClose, onFinish, fromSplash }: Tutori
             onClick={onClose}
             className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
           >
-            Überspringen
+            Skip
           </button>
 
           <div className="flex items-center gap-1">
@@ -333,7 +333,7 @@ export default function TutorialWizard({ onClose, onFinish, fromSplash }: Tutori
                 onClick={() => setStep(s => s - 1)}
                 className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
               >
-                ← Zurück
+                ← Back
               </button>
             )}
             {!isLast ? (
@@ -341,14 +341,14 @@ export default function TutorialWizard({ onClose, onFinish, fromSplash }: Tutori
                 onClick={() => setStep(s => s + 1)}
                 className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded transition-colors"
               >
-                Weiter →
+                Next →
               </button>
             ) : (
               <button
                 onClick={handleFinish}
                 className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-1.5 rounded transition-colors"
               >
-                {fromSplash ? "Evolution starten →" : "Fertig ✓"}
+                {fromSplash ? "Start Evolving →" : "Done ✓"}
               </button>
             )}
           </div>
